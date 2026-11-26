@@ -36,3 +36,47 @@ def encode_array(a: np.ndarray) -> dict:
 def to_list(a: np.ndarray) -> list:
     """Canonical response form: nested lists of finite float32."""
     return np.asarray(a, dtype=np.float32).tolist()
+
+
+class RequestError(ValueError):
+    """A malformed request: the server answers 422 with this message instead of failing."""
+
+
+def parse_request(body: Any) -> tuple[np.ndarray, list[float], int, np.ndarray | None]:
+    """Validate a forecast request body. Returns (init [3,6,32,36], doy [2], steps, perturbation [6,32,36] or None).
+
+    Values that are merely unusual (NaN, huge numbers, steps out of range) are accepted and handled downstream;
+    only structurally wrong requests raise RequestError.
+    """
+    if not isinstance(body, dict):
+        raise RequestError("body must be a JSON object")
+    if "init_states" not in body:
+        raise RequestError("missing 'init_states'")
+    try:
+        init = decode_array(body["init_states"])
+    except (ValueError, TypeError) as e:
+        raise RequestError(f"init_states: {e}") from e
+    if init.shape != (3, 6, 32, 36):
+        raise RequestError(f"init_states must have shape [3, 6, 32, 36], got {list(init.shape)}")
+    doy = body.get("doy_sincos")
+    try:
+        doy_l = [float(v) for v in doy]  # type: ignore[union-attr]
+    except (TypeError, ValueError) as e:
+        raise RequestError("doy_sincos must be a list of two numbers") from e
+    if len(doy_l) != 2:
+        raise RequestError("doy_sincos must be a list of two numbers")
+    try:
+        steps = int(float(body.get("steps", 10)))
+    except (TypeError, ValueError) as e:
+        raise RequestError("steps must be an integer") from e
+    pert = body.get("perturbation")
+    if pert is not None:
+        try:
+            pert = decode_array(pert)
+        except (ValueError, TypeError) as e:
+            raise RequestError(f"perturbation: {e}") from e
+        if pert.shape == (1, 6, 32, 36):
+            pert = pert[0]
+        if pert.shape != (6, 32, 36):
+            raise RequestError(f"perturbation must have shape [6, 32, 36], got {list(pert.shape)}")
+    return init, doy_l, steps, pert

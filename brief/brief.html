@@ -42,7 +42,7 @@
 <!-- ============================== PAGE 1 ============================== -->
 <section class="page">
   <h1>Wethrfork <small>a weather model with a speed limit &middot; Yugaantar DevForge, Track 2 &ldquo;Multiverse of Monsoon&rdquo;</small></h1>
-  <div class="byline">Team Return0; &middot; github.com/HARDIKSINGH150206/Wethrfork &middot; model <code>wethrfork-v1.0-speedlimit</code></div>
+  <div class="byline">Team Return0; &middot; github.com/HARDIKSINGH150206/Wethrfork &middot; model <code>wethrfork-v1.1-speedlimit</code></div>
 
   <div class="usp"><b>USP.</b> Wethrfork is a Climate Digital Twin of India whose shock responses are <b>causal by construction</b>: the network
   cannot move a change more than 8 grid cells (about 900 km) per simulated day, so a shock stays local, then spreads outward at a bounded speed.
@@ -70,9 +70,9 @@
   <table>
     <tr><th style="width:21%">Judge criterion</th><th style="width:36%">Architectural guarantee</th><th>Measured evidence</th></tr>
     <tr><td>Shock local on day 1, then spreads, never teleports</td><td>Reach &le; 8 cells/step (Chebyshev); light-cone unit test; pointwise response limiter</td>
-        <td>4 seasons &times; 2 official shocks all pass a gate stricter than the judge&rsquo;s: near fraction &ge; 0.99, growth 12&ndash;464&times;, far fraction 0.000, max |z| &le; 3.7</td></tr>
+        <td>4 seasons &times; 2 official shocks all pass a gate stricter than the judge&rsquo;s: near fraction &ge; 0.99, growth 20&ndash;3400&times;, far fraction 0.000, max |z| &le; 3.8. Swept over all 71 held-out windows: full causality marks (15/15) in every one</td></tr>
     <tr><td>Zero shock changes nothing</td><td>Deterministic server; shocked run skipped for a null shock</td><td>Max difference <b>0.0</b> in every season and in an offline, read-only, 4-CPU container</td></tr>
-    <tr><td>Valid outputs</td><td>Clamp applied after the delta: rain &ge; 0, 234&ndash;332 K</td><td>100% valid over 60 fuzz shocks (random box/Gaussian, 6 channels, 0.5&ndash;8 std)</td></tr>
+    <tr><td>Valid outputs</td><td>Clamp applied after the delta: rain &ge; 0, 234&ndash;332 K</td><td>100% valid and 99.5% causal over 200 fuzz shocks (random box/Gaussian, 6 channels, 0.5&ndash;8 std); 40 malformed or extreme API requests tested</td></tr>
     <tr><td>Beat persistence and climatology</td><td>Ridge + network blend per lead and channel; damping toward climatology</td>
         <td>Mean RMSE skill <b>0.134</b> over 71 windows (day 1: 0.22, day 4: 0.04, day 8: &minus;0.01)</td></tr>
     <tr><td>Heavy rain (&ge; 10 mm/day)</td><td>Log-space rain, wet-cell loss weight, per-lead rain scale tuned on the per-window score</td><td>CSI skill 0.075 (day 1: 0.09, day 4: 0.02)</td></tr>
@@ -95,8 +95,8 @@
   <h2>Failure modes (what we know does not work)</h2>
   <ul>
     <li><b>Jet transport.</b> The Arabian Sea low-level jet blows at 12&ndash;15 m/s (10&ndash;13 cells/day), faster than our 4-cell advection cap; jet-driven transport is under-represented.</li>
-    <li><b>Responses are learned dynamics, not validated physics.</b> Timing and locality are guaranteed; sign and size are not. Natural experiment (60 warm, moist Bay days): rain response has the same sign as the observed composite (r = 0.28); pressure does not match (r &asymp; 0). Example: a monsoon-stall shock first dries the west coast (days 1&ndash;2), then raises rain from day 4, the same sequence seen after naturally weak Arabian Sea flow in the data (a break-then-revival cycle): a learned correlation, not a proven intervention effect.</li>
-    <li><b>Extremes.</b> The official warm_ocean shock is about 11.8&sigma; of local variability (out of distribution); it passes, but fuzz causality is lower for wind shocks (u10 92%, v10 86%) and for 40%-of-current-value wind or moisture shocks.</li>
+    <li><b>Responses are learned dynamics, not validated physics.</b> Timing and locality are guaranteed; sign and size are not. Natural experiment (60 warm, moist Bay days): rain response has the same sign as the observed composite (r = 0.31); pressure does not match (r &asymp; 0). Example: a monsoon-stall shock first dries the west coast (days 1&ndash;2), then raises rain from day 4, the same sequence seen after naturally weak Arabian Sea flow in the data (a break-then-revival cycle): a learned correlation, not a proven intervention effect, and about twice the observed size by day 8.</li>
+    <li><b>Extremes.</b> The official warm_ocean shock is about 11.8&sigma; of local variability (out of distribution); it passes; the weakest fuzz categories are rain shocks (94%) and 40%-of-current-value shocks (96%).</li>
     <li><b>Grid and edges.</b> 1&deg; daily fields cannot hold a cyclone core; energy that leaves the domain is lost, so shocks at the edge propagate less.</li>
   </ul>
 
@@ -149,17 +149,17 @@
     <div>
       <h2>Stress test</h2>
       <figure class="small"><img src="figures/fuzz.png" alt="fuzz causality pass rate by channel and amplitude"/>
-      <figcaption>60 random shocks: 100% valid, 95% causal. White = combination not sampled.</figcaption></figure>
+      <figcaption>200 random shocks: 100% valid, 99.5% causal. White = combination not sampled.</figcaption></figure>
     </div>
   </div>
 
   <h2>Engineering</h2>
   <ul>
     <li>Offline, CPU-only, deterministic; artifacts (about 21 MB) are in the repo and hash-checked. Verified from a clean clone in a no-network, read-only, 4-CPU, 6 GB container.</li>
-    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 37 tests and the official repo scan.</li>
+    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 78 tests (including 40 API edge cases) and the official repo scan.</li>
     <li>Honest limits: day-8 skill is about climatology; pressure response unvalidated; impact cards show mean change, not probabilities.</li>
   </ul>
-  <div class="foot">Wethrfork v1.0 &middot; related work: semi-Lagrangian advection in learned weather models (Learning to Advect); tangent-linear perturbation forecasting.</div>
+  <div class="foot">Wethrfork v1.1 &middot; related work: semi-Lagrangian advection in learned weather models (Learning to Advect); tangent-linear perturbation forecasting.</div>
 </section>
 </body>
 </html>

@@ -181,3 +181,17 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 - **Why**: judges and planners already know this interaction model, and every unique feature of ours (forks, causality)
   sits one click from the map. We copy the interaction pattern, not any third-party branding or assets; everything is
   drawn locally, works offline, and runs on live output from our own server.
+
+### D37. Dynamics network fine-tuned on larger, edge-touching shocks and selected on a many-window sweep
+- **Decision**: the dynamics network was fine-tuned (8 epochs at K = 8, from the previous weights) with shock patches up
+  to 8 cells half-size, 35% of them touching a side edge, and a stronger far-field floor. The checkpoint is selected on
+  the official shocks over 40 calibration-year windows (all four checks), not on 4 seasonal windows.
+- **Why**: an official-shock sweep over all 71 held-out windows showed monsoon_stall failing "propagates" in 35% of them
+  (weak-wind windows: energy outside the neighbourhood stayed under 2% of the peak). After the fine-tune: 100% of windows,
+  15/15 causality points everywhere. Forecast skill is untouched (the skill network is unchanged).
+- **Cost**: the late west-coast rain response to the stall is about 2x the observed composite (was 1.4x).
+
+### D38. The server rejects malformed requests with 4xx instead of failing
+- **Decision**: `wethrfork.io.parse_request` validates structure (shapes, types, JSON); malformed bodies get 400 or 422
+  with a message. Unusual values (NaN, huge numbers, out-of-range steps or dates) are still accepted and answered with a
+  valid forecast. A perturbation with a leading batch dimension of 1 is accepted.
