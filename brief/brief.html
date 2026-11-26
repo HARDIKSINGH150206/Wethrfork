@@ -31,7 +31,7 @@
   figcaption { font-size: 6.8pt; color: var(--dim); margin-top: 1px; }
   .ok { color: var(--ok); font-weight: 700; } .bad { color: var(--bad); font-weight: 700; }
   .foot { position: absolute; bottom: 0; left: 0; right: 0; font-size: 6.6pt; color: var(--dim); border-top: 1px solid var(--line); padding-top: 2px; }
-  .shot img { width: 66%; margin: 0 auto; }
+  .shot img { width: 62%; margin: 0 auto; }
   .small img { height: 29mm; width: auto; max-width: 100%; margin: 0 auto; }
   .nat img { height: 44mm; width: auto; max-width: 100%; margin: 0 auto; }
   code { font-family: "DejaVu Sans Mono", monospace; font-size: 7.2pt; }
@@ -108,14 +108,13 @@
   <h1>A multiverse you can trust <small>visualisation and impact use case</small></h1>
   <div class="byline">Live from our own forecast server: nothing is pre-rendered, and it works with Wi-Fi off.</div>
 
-  <h2>Dashboard: fork a universe, see the speed limit, check the verdict</h2>
-  <figure class="shot"><img src="figures/dashboard.png" alt="Wethrfork dashboard fork view"/>
-  <figcaption>Fork view on a held-out monsoon window: warm Bay of Bengal (+3 K and +15% moisture), column water vapour, day +4. Control, shocked and delta maps;
-  white box = shock; dashed rings = the judge&rsquo;s radius (3 + 8&middot;day) and our hard reach (8&middot;day). Bottom left: the official causality checks run live on any shock;
-  the out-of-distribution meter flags extrapolation. Bottom right: regional impact.</figcaption></figure>
+  <h2>Dashboard: a weather map you can fork, audit and swipe</h2>
+  <figure class="shot"><img src="figures/dashboard.png" alt="Wethrfork dashboard, map view with delta layer and audit panel"/>
+  <figcaption>Map view on a held-out monsoon window after forking a warm Bay of Bengal (+3 K, +15% moisture): the <i>delta</i> of column water vapour at day +4 over live wind particles and isobars.
+  White box = the shock; dashed rings = the judge&rsquo;s radius (3 + 8&middot;day) and our hard reach (8&middot;day). Left: the official causality checks run live on the shock, the out-of-distribution meter, and regional impact.</figcaption></figure>
   <ul>
-    <li><b>Shock composer</b>: the two official shocks, a cyclone vortex (gradient-wind balance), heat dome, dry Kerala and a custom Gaussian on any channel. Every fork is kept and compared against the control.</li>
-    <li><b>Limits verdict</b>: non-zero, localised, propagates, stable, plus an out-of-distribution meter; a judge&rsquo;s new shock is answered in about 0.3 s.</li>
+    <li><b>Map</b> (Windy-style): wind, temperature, rain, pressure and moisture layers with live particles, isobars, point forecasts per universe, and a bottom timeline. Beyond a weather map: <b>delta</b>, a <b>swipe compare</b> of control against universe, <b>draw a shock</b> by dragging a rectangle, and a <b>sensitivity</b> overlay showing where a value comes from.</li>
+    <li><b>Timeline Prime</b> (forecast against reality with error maps), <b>Validation</b> (held-out skill, gate, fuzz, natural experiment and a live light-cone test) and <b>About</b>. A judge&rsquo;s new shock is answered in about 0.3 s.</li>
   </ul>
 
   <div class="cols">

@@ -12,9 +12,11 @@ export interface Meta {
   land_sea_mask: number[][]
   speed_limit_cells_per_day: number
   model_name: string
+  orography_m: number[][]
+  sigma_err?: number[][][][] | null
 }
 export interface WindowInfo { id: string; label: string; season: string; doy: number }
-export interface WindowData { id: string; init_states: number[][][][]; doy_sincos: [number, number]; truth?: number[][][][] }
+export interface WindowData { id: string; init_states: number[][][][]; doy_sincos: [number, number]; truth?: number[][][][]; clim?: number[][][][] }
 export interface Verdict {
   checks: { finite: boolean; nonzero: boolean; localized: boolean; propagates: boolean; stable: boolean }
   near_frac_day1: number

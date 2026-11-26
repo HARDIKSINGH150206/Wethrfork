@@ -1,5 +1,7 @@
 # 06. Frontend plan: the Wethrfork dashboard
 
+> **Superseded in layout (see `docs/DECISIONS.md` D36):** the shipped dashboard is a full-screen Windy-style map (layer menu, particles, isobars, timeline) with a left drawer for shocks and audit, plus Timeline Prime, Validation and About tabs. The sections below remain the feature specification.
+
 Owner: P3. Stack: React 18 + Vite + TypeScript, Zustand for state, ECharts for small charts, a hand-written `<canvas>`
 grid renderer for maps. Everything bundled; works with Wi-Fi off.
 
