@@ -55,5 +55,5 @@ DECISIONS D31 to D35.
 | 1 | Natural-experiment pressure response does not match the composite | P1 | reported, not tuned |
 | 2 | Day-8 skill is about climatology by design | P1 | accepted |
 | 3 | Dashboard: Timeline Prime, Validation tab, sensitivity overlay not built | P3 | open |
-| 4 | Brief: team name is a placeholder ("Team Wethrfork"); render with headless Chrome from `brief/brief.html` | P3 | open |
+| 4 | Brief done (team Return0;); re-render with headless Chrome from `brief/brief.html` after edits | P3 | closed |
 | 5 | Monsoon-stall fork raises west-coast rain in one monsoon window; unexplained, expect a judge question | P1 | open |
