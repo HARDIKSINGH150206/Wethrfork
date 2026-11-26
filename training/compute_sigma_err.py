@@ -24,7 +24,7 @@ def main() -> None:
     cfg = load_config(ROOT / args.config)
     dcfg = load_config(ROOT / args.data_config)
     arc = load_archive(dcfg)
-    eng = Engine.load(warmup=False)
+    eng = Engine.load(warmup=False, verify=False)
     lo, hi = split_bounds(arc, dcfg, cfg["grade_split"])
     ts = sample_starts(lo, hi, horizon=MAX_STEPS)
     slots = arc.slots()

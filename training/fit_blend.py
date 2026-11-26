@@ -43,7 +43,7 @@ def main() -> None:
     cfg = load_config(ROOT / args.config)
     dcfg = load_config(ROOT / args.data_config)
     arc = load_archive(dcfg)
-    eng = Engine.load(warmup=False)
+    eng = Engine.load(warmup=False, verify=False)
     splits = cfg["ship_refit_splits"] if args.ship else [cfg["fit_split"]]
     fc = collect(eng, arc, dcfg, splits)
     w = fit_blend(fc, eng.s, cfg["blend_grid_step"])

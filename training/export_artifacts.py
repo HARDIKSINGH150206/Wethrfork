@@ -13,6 +13,8 @@ ART = ROOT / "artifacts"
 FILES = [
     "nn.pt",
     "nn_config.json",
+    "nn_dyn.pt",
+    "nn_dyn_config.json",
     "ridge.pt",
     "climatology.npy",
     "clim_std.npy",
@@ -37,7 +39,10 @@ def status() -> None:
     print("gate:", ("PASS" if json.loads(gate.read_text()).get("all_pass") else "FAIL") if gate.exists() else "not run")
 
 
-def export(run_dir: Path, model_name: str, selfgrade: dict | None) -> None:
+def export(run_dir: Path, model_name: str, selfgrade: dict | None, dyn_dir: Path | None = None) -> None:
+    if dyn_dir is not None and (dyn_dir / "best.pt").exists():
+        shutil.copy2(dyn_dir / "best.pt", ART / "nn_dyn.pt")
+        shutil.copy2(dyn_dir / "nn_config.json", ART / "nn_dyn_config.json")
     best = run_dir / "best.pt"
     if best.exists():
         shutil.copy2(best, ART / "nn.pt")
@@ -59,12 +64,13 @@ def main() -> None:
     ap.add_argument("--run-dir", default="runs/nn")
     ap.add_argument("--model-name", default="wethrfork-v0.2-speedlimit")
     ap.add_argument("--selfgrade-json", default=None)
+    ap.add_argument("--dyn-dir", default=None, help="run dir of the separate shock-dynamics network")
     args = ap.parse_args()
     if args.status:
         status()
         return
     sg = json.loads(Path(args.selfgrade_json).read_text()) if args.selfgrade_json else None
-    export(ROOT / args.run_dir, args.model_name, sg)
+    export(ROOT / args.run_dir, args.model_name, sg, ROOT / args.dyn_dir if args.dyn_dir else None)
 
 
 if __name__ == "__main__":
