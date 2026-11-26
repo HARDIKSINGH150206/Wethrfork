@@ -6,7 +6,6 @@ serves POST /health and POST /simulate. Offline, CPU only, deterministic.
 import argparse
 import time
 
-import numpy as np
 import torch
 import uvicorn
 from fastapi import FastAPI, Request
