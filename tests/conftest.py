@@ -34,7 +34,9 @@ def doy() -> list[float]:
     return sincos_of_slot(190)
 
 
-def build_test_artifacts(d: Path, with_nn: bool = True, with_ridge: bool = True, seed: int = 1, with_dyn: bool = False) -> Path:
+def build_test_artifacts(
+    d: Path, with_nn: bool = True, with_ridge: bool = True, seed: int = 1, with_dyn: bool = False
+) -> Path:
     """Write tiny random artifacts (never committed) so engine tests run without data or training."""
     import json
 
