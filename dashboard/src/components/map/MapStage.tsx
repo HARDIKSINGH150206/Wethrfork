@@ -3,7 +3,7 @@ import { CELLS } from '../../lib/grid'
 import { LAT_MAX, LAT_MIN, LON_MAX, LON_MIN } from '../../lib/interp'
 import { LAYERS, SENS_LAYER, scalarAt, windAt } from '../../lib/layers'
 import { ParticleSystem } from '../../lib/particles'
-import { coastline, contourLines, makeRaster, paintBase, paintField } from '../../lib/render'
+import { coastline, contourLines, makeRaster, paintBase, paintField, paintRelief } from '../../lib/render'
 import type { Polyline } from '../../lib/render'
 import { deltaScale } from '../../lib/series'
 import { CONTROL, useStore } from '../../state/store'
@@ -37,8 +37,9 @@ export function MapStage() {
   const rA = useMemo(() => makeRaster(), [])
   const rB = useMemo(() => makeRaster(), [])
   const rS = useMemo(() => makeRaster(), [])
+  const relief = useMemo(() => makeRaster(), [])
   const coast = useMemo<Polyline[]>(() => (meta ? coastline(meta.land_sea_mask) : []), [meta])
-  useEffect(() => { if (meta) paintBase(base, meta.land_sea_mask, meta.orography_m) }, [meta, base])
+  useEffect(() => { if (meta) { paintBase(base, meta.land_sea_mask, meta.orography_m); paintRelief(relief, meta.orography_m) } }, [meta, base, relief])
   useEffect(() => {
     fetch('/india_outline.geojson').then((r) => r.json()).then((g) => setOutline(g.features[0].geometry.coordinates[0])).catch(() => null)
   }, [])
@@ -109,6 +110,8 @@ export function MapStage() {
       paintField(rA, aField, def, null)
       drawRaster(rA)
     }
+    // terrain relief through the colour layer
+    g.save(); g.globalCompositeOperation = 'soft-light'; g.globalAlpha = 0.85; drawRaster(relief); g.restore()
     if (sens) {
       const m = Float32Array.from(sens.map)
       const top = Array.from(m).sort((p, q) => p - q)[Math.floor(CELLS * 0.99)] || 1
@@ -206,7 +209,7 @@ export function MapStage() {
       g.font = '600 11px system-ui'; g.fillStyle = 'rgba(255,255,255,0.85)'
       g.fillText('CONTROL', 14, 86); g.fillText(`UNIVERSE · ${universes[selected]?.name ?? ''}`.toUpperCase(), compareX * size.w + 14, 86)
     }
-  }, [view, size, layer, delta, compare, compareX, tf, selected, universes, showIsobars, showStipple, showRings, sens, drawnBox, deltaMax, meta, outline, coast, base, rA, rB, rS, sigma, uni, ctl, box])
+  }, [view, size, layer, delta, compare, compareX, tf, selected, universes, showIsobars, showStipple, showRings, sens, drawnBox, deltaMax, meta, outline, coast, base, rA, rB, rS, relief, sigma, uni, ctl, box])
 
   // ---------------------------------------------------------------- particles
   const sysA = useRef(new ParticleSystem()), sysB = useRef(new ParticleSystem())

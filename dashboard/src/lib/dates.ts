@@ -26,3 +26,13 @@ export function placeName(lat: number, lon: number): string {
   }
   return best || `${lat.toFixed(2)}°N ${lon.toFixed(2)}°E`
 }
+
+const WD = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+/** "Thursday 17" (or "Thu 17" when short) for forecast day k; falls back to "Jul 17" without a weekday. */
+export function dayName(doy: [number, number] | null, k: number, weekday: number | null, short = false): string {
+  const md = dayLabel(doy, k)
+  if (weekday === null) return md
+  const wd = WD[(weekday + k) % 7]
+  return `${short ? wd.slice(0, 3) : wd} ${md.split(' ')[1]}`
+}

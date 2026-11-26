@@ -43,6 +43,7 @@ class WindowsStore:
                 "id": wid,
                 "init_states": arc.data[i - 2 : i + 1].tolist(),
                 "doy_sincos": sincos_of_slot(slot),
+                "weekday": int(arc.dates[i].weekday()),  # 0 = Monday, of the last input day (timeline labels)
             }
             if self.clim is None:
                 self.clim = np.load(ROOT / "artifacts" / "climatology.npy")

@@ -97,3 +97,24 @@ export function contourLines(f: Float32Array, levels: number[], U = 4): Contour[
 export function coastline(mask: number[][]): Polyline[] {
   return contourLines(Float32Array.from(mask.flat()), [0.5], 4)[0]?.lines ?? []
 }
+
+/** Hillshade from orography (light from the north-west), neutral grey over flat ground; blended with soft-light. */
+export function paintRelief(canvas: HTMLCanvasElement, oro: number[][]): void {
+  const g = canvas.getContext('2d')!
+  const img = g.createImageData(RW, RH)
+  const o = Float32Array.from(oro.flat())
+  const d = 0.35
+  for (let py = 0; py < RH; py++) {
+    const lat = 38 - (py + 0.5) / S
+    for (let px = 0; px < RW; px++) {
+      const lon = 65 + (px + 0.5) / S
+      const dzdx = (sample(o, lat, lon + d) - sample(o, lat, lon - d)) / (2 * d * 1000) // km per degree
+      const dzdy = (sample(o, lat + d, lon) - sample(o, lat - d, lon)) / (2 * d * 1000)
+      const shade = Math.min(Math.max(0.5 + 0.16 * (dzdx * 0.707 - dzdy * 0.707) * 2.2, 0.08), 0.92)
+      const k = (py * RW + px) * 4
+      img.data[k] = img.data[k + 1] = img.data[k + 2] = shade * 255
+      img.data[k + 3] = 255
+    }
+  }
+  g.putImageData(img, 0, 0)
+}
