@@ -214,7 +214,9 @@ class Engine:
     ) -> np.ndarray:
         """[3,6,32,36] physical -> [steps,6,32,36] physical, clamped. Never raises: falls back to the ridge head."""
         try:
-            return self.simulate_parts(init_states, doy_sincos, steps, perturbation)["out"]
+            # float32 overflow on absurd inputs (1e20 and beyond) yields inf, which the final clamp handles; keep the log quiet
+            with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                return self.simulate_parts(init_states, doy_sincos, steps, perturbation)["out"]
         except Exception:
             log.exception("simulate failed; using ridge-only fallback")
             return self._fallback(init_states, doy_sincos, steps, perturbation)
