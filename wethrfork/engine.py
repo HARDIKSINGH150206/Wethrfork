@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 from . import MODEL_NAME
-from .blend import PostProc, clamp
+from .blend import PostProc, clamp, limit_delta
 from .climatology import slot_of_last_day
 from .model import NetConfig, SpeedLimitNet, rollout
 from .normalize import from_z, to_z
@@ -46,8 +46,10 @@ class Engine:
         self.static_t: torch.Tensor | None = None
         self.ridge: RidgeHead | None = None
         self.net: SpeedLimitNet | None = None
+        self.dyn: SpeedLimitNet | None = None  # optional separate network for the shock response
         self.pp = PostProc()
         self.clim_std: np.ndarray | None = None
+        self.kit_std: np.ndarray | None = None
 
     # ------------------------------------------------------------------ loading
     @classmethod
@@ -81,6 +83,8 @@ class Engine:
         self.s = torch.tensor(norm["anom_std"], dtype=torch.float32)
         self.static_t = torch.from_numpy(np.load(d / "static.npy").astype(np.float32)).clone()
         self.static_t[1] = self.static_t[1] / 1000.0  # orography in km
+        sp = d / "stats.json"
+        self.kit_std = np.array(json.loads(sp.read_text())["std"], dtype=np.float32) if sp.exists() else None
         cs = d / "clim_std.npy"
         self.clim_std = np.load(cs).astype(np.float32) if cs.exists() else None
         rp = d / "ridge.pt"
@@ -93,6 +97,14 @@ class Engine:
             net.load_state_dict(torch.load(nn_p, map_location="cpu", weights_only=True))
             self.net = net.eval()
             for p in self.net.parameters():
+                p.requires_grad_(False)
+        dyn_p = d / "nn_dyn.pt"
+        if dyn_p.exists():
+            dcfg = NetConfig(**json.loads((d / "nn_dyn_config.json").read_text()))
+            dyn = SpeedLimitNet(dcfg)
+            dyn.load_state_dict(torch.load(dyn_p, map_location="cpu", weights_only=True))
+            self.dyn = dyn.eval()
+            for p in self.dyn.parameters():
                 p.requires_grad_(False)
         if self.ridge is None and self.net is None:
             raise RuntimeError("no ridge.pt or nn.pt found in artifacts")
@@ -166,10 +178,17 @@ class Engine:
 
         zf = self.pp.damp_z(self.pp.blend(z_nn, z_ridge))
         skill = from_z(torch.from_numpy(zf), clim_tgt, self.s).numpy()
-        skill[:, 1] = self.pp.map_rain(skill[:, 1])
+        skill[:, 1] = self.pp.map_rain(skill[:, 1], clim_tgt[:, 1].numpy())
 
-        if shocked and nn_phys is not None:
-            delta = np.nan_to_num(nn_phys[1] - nn_phys[0]).astype(np.float32)
+        dyn_phys = None
+        if shocked and self.dyn is not None:  # dynamics head: a second local network, batch of 2
+            zd = rollout(self.dyn, z0, slots_t.expand(len(xs), -1), self.clim_t, self.s, self.static_t, steps)
+            dyn_phys = from_z(zd, clim_tgt.unsqueeze(0), self.s).numpy()
+        resp = dyn_phys if dyn_phys is not None else nn_phys
+        if shocked and resp is not None:
+            delta = np.nan_to_num(resp[1] - resp[0]).astype(np.float32)
+            if self.kit_std is not None:
+                delta = limit_delta(delta, self.kit_std)
         elif shocked:  # ridge-only fallback: response lives inside the shock box only
             z_r2 = self.ridge.predict(z0[1], slots_t[0, 1:]).numpy()
             delta = (

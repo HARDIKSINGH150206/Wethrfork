@@ -1,0 +1,62 @@
+{
+ "model_name": "wethrfork-v0.2-speedlimit",
+ "files": {
+  "nn.pt": {
+   "sha256": "cd0849184cd092c98cdb80da62aa33a60e37f32558658411f2ae11bb88ed993a",
+   "bytes": 1574861
+  },
+  "nn_config.json": {
+   "sha256": "a6558f79159ed48c91737c9096ea50fc763cf6bbf071a58b261041d509c790c3",
+   "bytes": 77
+  },
+  "nn_dyn.pt": {
+   "sha256": "0afefa9042a84295754965bc360997ecc46431efd39c5afeef81bc394e1f43aa",
+   "bytes": 1574861
+  },
+  "nn_dyn_config.json": {
+   "sha256": "a6558f79159ed48c91737c9096ea50fc763cf6bbf071a58b261041d509c790c3",
+   "bytes": 77
+  },
+  "ridge.pt": {
+   "sha256": "6c2b68db9b1a33acb5450485a7f183400eceac656340be6bd09ad06824279d18",
+   "bytes": 8130011
+  },
+  "climatology.npy": {
+   "sha256": "bffd5a646948eeac54a3acd43595a08d7c7ab7cfec9ad98079b63676c6917839",
+   "bytes": 10119296
+  },
+  "clim_std.npy": {
+   "sha256": "bf00f0ace051354f0839829450464f33051602f238a365506a3e9f4ea029207a",
+   "bytes": 27776
+  },
+  "static.npy": {
+   "sha256": "2adafeb0ff740aa2fb91758c949e261392e5d788cb773830c265501372e69a9f",
+   "bytes": 9344
+  },
+  "stats.json": {
+   "sha256": "f00103a38a93dcbaea4e4bd31da3db6862812cd2807bd2224c51264054e014a7",
+   "bytes": 355
+  },
+  "norm.json": {
+   "sha256": "a6de3099aab3acbb7824ab205f82bd29e026b7b79a8165cc2393ac9c6f27fcb1",
+   "bytes": 169
+  },
+  "postproc.json": {
+   "sha256": "d58700bd112c517af9a96ed6f362dffcc5d986dee404d8d2ba0ddfee83013ab9",
+   "bytes": 2422
+  },
+  "sigma_err.npy": {
+   "sha256": "cec63ab98796f25dcd9d2e7704bf087ef1923f6d20169ec4bc8b804dcd963f39",
+   "bytes": 387200
+  },
+  "sigma_err_logtp.npy": {
+   "sha256": "9b3a2fb6283547c1a7f4786a072692abddf226015a422841136611c207358f01",
+   "bytes": 64640
+  }
+ },
+ "trained_on": "train split from configs/data.yaml",
+ "selfgrade": {
+  "mean_ss_grade": null,
+  "csi_skill_grade": null
+ }
+}
