@@ -12,7 +12,7 @@ from training.data import ROOT, load_archive, load_config
 from training.forecasts import collect, to_phys
 from wethrfork.blend import PostProc
 from wethrfork.engine import Engine
-from wethrfork.physics import MAX_STEPS, NC, TP, lat_weights
+from wethrfork.physics import MAX_STEPS, NC, TP
 
 log = logging.getLogger(__name__)
 

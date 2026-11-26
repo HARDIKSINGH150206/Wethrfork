@@ -1,4 +1,5 @@
 """Collect network and ridge forecasts on a split, in normalised and physical space, for calibration fitting."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,7 +24,9 @@ class Forecasts:
 
 
 @torch.no_grad()
-def collect(engine: Engine, arc: Archive, dcfg: dict, split_names: list[str], leads: int = MAX_STEPS, stride: int = 1) -> Forecasts:
+def collect(
+    engine: Engine, arc: Archive, dcfg: dict, split_names: list[str], leads: int = MAX_STEPS, stride: int = 1
+) -> Forecasts:
     ts = []
     for name in split_names:
         lo, hi = split_bounds(arc, dcfg, name)
