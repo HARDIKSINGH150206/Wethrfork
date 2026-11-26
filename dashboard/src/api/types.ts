@@ -16,7 +16,7 @@ export interface Meta {
   sigma_err?: number[][][][] | null
 }
 export interface WindowInfo { id: string; label: string; season: string; doy: number }
-export interface WindowData { id: string; init_states: number[][][][]; doy_sincos: [number, number]; truth?: number[][][][]; clim?: number[][][][] }
+export interface WindowData { id: string; init_states: number[][][][]; doy_sincos: [number, number]; truth?: number[][][][]; clim?: number[][][][]; weekday?: number }
 export interface Verdict {
   checks: { finite: boolean; nonzero: boolean; localized: boolean; propagates: boolean; stable: boolean }
   near_frac_day1: number

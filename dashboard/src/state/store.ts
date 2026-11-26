@@ -33,6 +33,7 @@ interface Store {
   doy: [number, number] | null
   truth: Float32Array | null
   clim: Float32Array | null
+  weekday: number | null
   universes: Record<string, Universe>
   order: string[]
   selected: string
@@ -74,7 +75,7 @@ export const CONTROL = 'control'
 const TARGET_CHANNEL: Record<LayerId, string> = { wind: 'u10', temp: 't2m', rain: 'tp', pressure: 'msl', moisture: 'tcwv' }
 
 export const useStore = create<Store>((set, get) => ({
-  meta: null, windows: [], windowId: null, init: null, doy: null, truth: null, clim: null,
+  meta: null, windows: [], windowId: null, init: null, doy: null, truth: null, clim: null, weekday: null,
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
   showRings: true, showIsobars: false, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
@@ -100,7 +101,7 @@ export const useStore = create<Store>((set, get) => ({
     const doy = w.doy_sincos
     const control: Universe = { id: CONTROL, name: 'Control', perturbation: null, box: null, rollout: null, verdict: null, status: 'loading' }
     set({
-      windowId: id, init, doy, truth: w.truth ? flatten(w.truth) : null, clim: w.clim ? flatten(w.clim) : null,
+      windowId: id, init, doy, truth: w.truth ? flatten(w.truth) : null, clim: w.clim ? flatten(w.clim) : null, weekday: w.weekday ?? null,
       universes: { [CONTROL]: control }, order: [CONTROL], selected: CONTROL, tf: 0, pin: null, sens: null, drawnBox: null, meteo: false,
     })
     try {

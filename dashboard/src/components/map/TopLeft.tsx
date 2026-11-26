@@ -30,8 +30,8 @@ export function TopLeft() {
   return (
     <>
       <div className="tl" data-ui>
-        <button className="burger" onClick={() => s.set({ menuOpen: !s.menuOpen })} aria-label="Menu"><span /><span /><span /></button>
         <div className={`search ${open ? 'open' : ''}`}>
+          <button className="burger" onClick={() => s.set({ menuOpen: !s.menuOpen })} aria-label="Menu"><span /><span /><span /></button>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           <input placeholder="Search location…" value={q} onFocus={() => setOpen(true)} onChange={(e) => { setQ(e.target.value); setOpen(true) }}
             onKeyDown={(e) => { if (e.key === 'Enter' && hits.places[0]) go(hits.places[0].lat, hits.places[0].lon); if (e.key === 'Escape') setOpen(false) }} />
