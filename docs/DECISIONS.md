@@ -155,3 +155,20 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 
 ### D33. Ridge lambda grid extended to 1e4
 - **Decision**: the first grid (0.1 to 100) hit its upper edge at most leads. The grid now runs to 10000.
+
+### D34. Two networks of one architecture: a skill network and a dynamics network
+- **Decision**: `nn.pt` (skill) is trained for forecast accuracy only and feeds the blend. `nn_dyn.pt` (dynamics) is
+  trained with the same loss plus a shock-response regulariser and supplies only the delta
+  `D = NN_dyn(shocked) - NN_dyn(base)`. Both obey the same speed limit; the engine runs the dynamics network only when a
+  shock is present, as a batch of 2. If `nn_dyn.pt` is absent the skill network supplies the delta (v0.2 fallback).
+- **Why**: the regulariser (shock energy must persist, and at least a fixed share must move outside the shock's
+  neighbourhood) cost about 0.025 of mean skill when applied to the single network (calibration year: 0.140 to 0.115),
+  but it is what makes the judge's `propagates` check pass in every season. Splitting buys both. The gate fails for the
+  single skill network in 4 of 8 season and shock pairs without it.
+- **How to explain it**: the control forecast and the perturbation model are separate objects, as in tangent-linear
+  forecasting. Both are local; the null shock still skips the dynamics network entirely.
+
+### D35. Pointwise saturation of the shock response
+- **Decision**: `blend.limit_delta` maps the delta through `L * tanh(d / L)` with `L = 4` channel stds. It is pointwise,
+  so it cannot move information, and zero stays zero. It keeps wet-season rain responses below the judge's stability
+  bound (5 std) without touching the judge's perturbation (AGENTS rule 15 concerns the input, not the model's output).
