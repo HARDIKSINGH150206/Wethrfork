@@ -56,4 +56,4 @@ DECISIONS D31 to D35.
 | 2 | Day-8 skill is about climatology by design | P1 | accepted |
 | 3 | Dashboard: Timeline Prime, Validation tab, sensitivity overlay not built | P3 | open |
 | 4 | Brief done (team Return0;); re-render with headless Chrome from `brief/brief.html` after edits | P3 | closed |
-| 5 | Monsoon-stall fork raises west-coast rain in one monsoon window; unexplained, expect a judge question | P1 | open |
+| 5 | Monsoon-stall fork raises west-coast rain from day 4: explained. Data shows the same break-then-revival sequence after weak Arabian Sea flow (rain -1.4 day 1, +1.8 day 10, 311 cases); model: -0.4 day 1, +1.5 to +2.4 day 8 to 10; learned correlation, late response about 1.4x observed (dynamics network). See Q&A 20 | P1 | explained, stated as a limit |
