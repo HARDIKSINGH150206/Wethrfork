@@ -40,7 +40,7 @@ export function Meteogram() {
   const diff = (a: number, b: number | undefined, f: (x: number) => number, digits = 1) =>
     b === undefined ? null : <small className={a - b >= 0 ? 'up' : 'down'}>{a - b >= 0 ? '+' : ''}{(f(a) - f(b)).toFixed(digits)}</small>
   return (
-    <section className="meteo" data-ui onPointerDown={(e) => e.stopPropagation()}>
+    <section className="meteo panel" data-ui onPointerDown={(e) => e.stopPropagation()}>
       <header>
         <b>{placeName(pin.lat, pin.lon)}</b>
         <span>{placeName(pin.lat, pin.lon).includes('°') ? '' : `${pin.lat.toFixed(2)}°N ${pin.lon.toFixed(2)}°E · `}{universes[selected]?.name}{base ? ' vs control' : ''}</span>

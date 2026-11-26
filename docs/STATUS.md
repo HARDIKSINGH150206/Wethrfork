@@ -49,6 +49,7 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 | Natural experiment (60 warm, moist Bay days, day 2) | rain pattern r = 0.31 (same sign in the Bay); pressure r = -0.07 (no match) |
 | Monsoon-stall rain | same break-then-revival sequence as the data; dynamics network about 2x the observed size by day 8 |
 | Repo scan | 15.0 / 15 |
+| Dashboard (D42) | satellite-map layout: bundled NASA Blue Marble base map and Natural Earth borders (India's view), frosted panels, round tools, timeline capsule; build, 16 vitest, 13-step browser drive with 0 console errors, preflight 20 / 20 |
 
 ## Open issues
 | # | Issue | Status |
@@ -56,6 +57,6 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 | 1 | Pressure response does not match the natural-experiment composite | stated as a limit |
 | 2 | Day-8 skill is about climatology | by design |
 | 3 | Stall rain response about 2x observed after the dynamics fine-tune (was 1.4x); previous weights kept outside the repo for a revert | stated as a limit; Q&A 20 |
-| 4 | Not rehearsed on the presentation laptop; run `make preflight` and `make demo` there | open |
+| 4 | Not rehearsed on the presentation laptop; run `make preflight` and `make demo` there (also check the new map look on the projector) | open |
 | 5 | 10 of 4,138 shocked forecasts over the whole archive (0.24%) narrowly fail the judge's propagation check | stated residual risk |
 | 6 | An API shock differs from an edited input day (median 14.5 mm/day rain, up to 105) | by design (D41), stated |
