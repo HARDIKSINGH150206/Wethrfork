@@ -32,6 +32,9 @@ class PostProc:
         self.rain_dst = cfg.get("rain_dst")  # [14][Q] observed quantiles
         self.rain_scale = np.asarray(cfg.get("rain_scale", np.ones(MAX_STEPS)), dtype=np.float32)
         self.rain_scale_above = float(cfg.get("rain_scale_above", 5.0))
+        self.rain_shrink = np.asarray(cfg.get("rain_shrink", np.ones(MAX_STEPS)), dtype=np.float32)
+        self.rain_floor = np.asarray(cfg.get("rain_floor", np.zeros(MAX_STEPS)), dtype=np.float32)
+        self.rain_mix = np.asarray(cfg.get("rain_mix", np.ones(MAX_STEPS)), dtype=np.float32)  # 0 = raw, 1 = mapped
 
     @staticmethod
     def _lead(k: int) -> int:
@@ -53,11 +56,13 @@ class PostProc:
             out[k] = self.damp[self._lead(k)][:, None, None] * z[k]
         return out
 
-    def map_rain(self, tp: np.ndarray) -> np.ndarray:
-        """tp [K,H,W] mm/day -> quantile-mapped and bias-adjusted."""
+    def map_rain(self, tp: np.ndarray, clim_tp: np.ndarray | None = None) -> np.ndarray:
+        """tp [K,H,W] mm/day -> shrunk toward climatology, quantile-mapped and bias-adjusted."""
         out = np.array(tp, dtype=np.float32, copy=True)
         for k in range(out.shape[0]):
             j = self._lead(k)
+            if clim_tp is not None and self.rain_shrink[j] != 1.0:
+                out[k] = clim_tp[k] + self.rain_shrink[j] * (out[k] - clim_tp[k])
             if self.rain_src is not None and self.rain_dst is not None:
                 src = np.asarray(self.rain_src[j], dtype=np.float64)
                 dst = np.asarray(self.rain_dst[j], dtype=np.float64)
@@ -65,12 +70,16 @@ class PostProc:
                 m = np.interp(v, src, dst)
                 hi = v > src[-1]
                 m[hi] = v[hi] - src[-1] + dst[-1]
-                out[k] = m.astype(np.float32)
+                g = float(self.rain_mix[j])
+                out[k] = ((1.0 - g) * out[k] + g * m).astype(np.float32)
             f = float(self.rain_scale[j])
+            fl = float(self.rain_floor[j])
             if f != 1.0:
                 a = self.rain_scale_above
                 o = out[k]
                 out[k] = np.where(o > a, a + (o - a) * f, o)
+            if fl > 0:
+                out[k] = np.where(out[k] < fl, 0.0, out[k])  # no drizzle: dry days stay dry
         return out
 
 

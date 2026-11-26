@@ -178,7 +178,7 @@ class Engine:
 
         zf = self.pp.damp_z(self.pp.blend(z_nn, z_ridge))
         skill = from_z(torch.from_numpy(zf), clim_tgt, self.s).numpy()
-        skill[:, 1] = self.pp.map_rain(skill[:, 1])
+        skill[:, 1] = self.pp.map_rain(skill[:, 1], clim_tgt[:, 1].numpy())
 
         dyn_phys = None
         if shocked and self.dyn is not None:  # dynamics head: a second local network, batch of 2

@@ -12,9 +12,12 @@ from training.data import ROOT, load_archive, load_config
 from training.forecasts import collect, to_phys
 from wethrfork.blend import PostProc
 from wethrfork.engine import Engine
-from wethrfork.physics import MAX_STEPS, NC, TP
+from wethrfork.physics import MAX_STEPS, NC, TP, lat_weights
 
 log = logging.getLogger(__name__)
+# competition points per unit: 30 pts for mean ss 0.12 over 6 channels x 3 leads; 15 pts for CSI skill 0.10 over 3 leads
+RMSE_PTS_PER_SS = 30.0 / 0.12 / 18.0
+CSI_PTS_PER_SKILL = 15.0 / 0.10 / 3.0
 
 
 def csi(p: np.ndarray, o: np.ndarray, thr: float = 10.0) -> float:
@@ -72,7 +75,7 @@ def main() -> None:
     arc = load_archive(dcfg)
     path = ROOT / "artifacts" / "postproc.json"
     pp = json.loads(path.read_text())
-    eng = Engine.load(warmup=False)
+    eng = Engine.load(warmup=False, verify=False)
     splits = cfg["ship_refit_splits"] if args.ship else [cfg["fit_split"]]
     fc = collect(eng, arc, dcfg, splits)
     proc = PostProc({"blend_w": pp["blend_w"]})
@@ -81,38 +84,40 @@ def main() -> None:
     log.info("damping by lead (mean over channels): %s", np.round(damp.mean(axis=1), 2).tolist())
     z = np.stack([PostProc({"damp": damp}).damp_z(blended[i]) for i in range(len(blended))])
     phys = to_phys(z, fc.clim_tgt, eng.s)
-    src, dst, scale = [], [], []
-    bias_t = cfg["rain"]["bias_target_by_lead"]
+    scale, shrink, floor = [], [], []
+    wl = lat_weights()[None, :, None]
     for k in range(MAX_STEPS):
-        s_k, d_k = fit_rain(phys[:, k, TP], fc.truth_phys[:, k, TP], cfg["rain"]["quantiles"])
-        src.append(s_k)
-        dst.append(d_k)
-        tmp = PostProc({"rain_src": [s_k] * MAX_STEPS, "rain_dst": [d_k] * MAX_STEPS})
-        mapped = tmp.map_rain(phys[:, k, TP][:, None].repeat(MAX_STEPS, axis=1))[:, 0]  # lead-independent map
+        raw0 = phys[:, k, TP]
         obs = fc.truth_phys[:, k, TP]
-        n_obs = max(int((obs > 10).sum()), 1)
-        best, best_c = 1.0, -1.0
-        for f in np.arange(0.8, 2.01, 0.05):  # smallest scale that reaches the frequency-bias target
-            m = np.where(mapped > 5, 5 + (mapped - 5) * f, mapped)
-            best = float(f)
-            if (m > 10).sum() / n_obs >= bias_t[k]:
-                break
-        c = csi(np.where(mapped > 5, 5 + (mapped - 5) * best, mapped), obs)
-        best_c = 0.0 if np.isnan(c) else c
-        m = np.where(mapped > 5, 5 + (mapped - 5) * best, mapped)
+        clim_tp = fc.clim_tgt[:, k, TP]
+        persist = fc.last_phys[:, TP]
+
+        def rmse_w(x, obs=obs):  # per-window latitude-weighted RMSE, like the judge's per-window skill
+            return np.sqrt((wl * (x - obs) ** 2).mean(axis=(1, 2)))
+
+        ref = np.minimum(rmse_w(persist), rmse_w(clim_tp))
+        c_ref = np.nanmax([csi(persist, obs), csi(clim_tp, obs)])
+        best, best_j = (1.0, 0.0, 1.0), -1e9
+        for a in (0.3, 0.5, 0.7, 0.85, 1.0):
+            raw = clim_tp + a * (raw0 - clim_tp)
+            for fl in (0.0, 0.5, 1.0, 2.0):
+                for f in np.arange(0.8, 2.01, 0.1):
+                    m = np.where(raw > 5, 5 + (raw - 5) * f, raw)
+                    m = np.where(m < fl, 0.0, m)
+                    c = csi(m, obs)
+                    cs = 0.0 if np.isnan(c) else (c - c_ref) / (1 - c_ref)
+                    ss_w = float(np.mean(1.0 - rmse_w(m) / np.maximum(ref, 1e-6)))
+                    j = RMSE_PTS_PER_SS * ss_w + CSI_PTS_PER_SKILL * cs
+                    if j > best_j:
+                        best_j, best = j, (a, fl, float(f))
+        shrink.append(best[0])
+        floor.append(best[1])
+        scale.append(best[2])
         log.info(
-            "lead %d: rain scale %.2f csi %.3f freq bias %.2f (prior target %.2f)",
-            k + 1,
-            best,
-            best_c,
-            (m > 10).sum() / n_obs,
-            bias_t[k],
+            "lead %d: shrink %.2f floor %.1f scale %.2f points-proxy %.2f", k + 1, best[0], best[1], best[2], best_j
         )
-        scale.append(best)
     sm = np.convolve(np.pad(scale, 1, mode="edge"), np.ones(3) / 3, mode="valid")
-    pp.update(
-        {"damp": damp.tolist(), "rain_src": src, "rain_dst": dst, "rain_scale": sm.tolist(), "rain_scale_above": 5.0}
-    )
+    pp.update({"damp": damp.tolist(), "rain_scale": sm.tolist(), "rain_scale_above": 5.0})
     path.write_text(json.dumps(pp))
     log.info("wrote %s", path)
 
