@@ -1,7 +1,7 @@
 PY ?= python
 CFG ?= configs
 
-.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep stress audit-http test scan serve validate judge lab dash demo preflight status figures brief
+.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep stress audit-http test scan rehearsal release-check release-check-quick serve validate judge lab dash demo preflight status figures brief
 
 setup:
 	$(PY) -m venv .venv && . .venv/bin/activate && pip install -r requirements-dev.txt
@@ -61,6 +61,12 @@ test:
 	$(PY) -m pytest -q tests/
 scan:
 	$(PY) -m evaluation.scan_repo
+rehearsal:
+	$(PY) -m evaluation.judge_rehearsal   # the judge's procedure in a judge-like container (Docker)
+release-check:
+	$(PY) -m evaluation.release_check     # every gate, strict; exit 0 only if all pass
+release-check-quick:
+	$(PY) -m evaluation.release_check --quick
 
 serve:
 	$(PY) serve.py --port 8000
