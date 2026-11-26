@@ -22,6 +22,7 @@ export interface Universe {
 export type Tab = 'map' | 'timeline' | 'validation' | 'about'
 export type Drawer = 'shock' | 'audit' | null
 export interface Pin { lat: number; lon: number }
+export interface Focus { lat: number; lon: number; zoom: number; seq: number }
 export interface Sens { map: Float32Array; lat: number; lon: number; lead: number; channel: string; top: string }
 
 interface Store {
@@ -57,6 +58,9 @@ interface Store {
   drawer: Drawer
   sens: Sens | null
   sensBusy: boolean
+  menuOpen: boolean
+  meteo: boolean
+  focus: Focus | null
   boot: () => Promise<void>
   selectWindow: (id: string) => Promise<void>
   fork: (spec: ShockSpec) => Promise<void>
@@ -74,7 +78,7 @@ export const useStore = create<Store>((set, get) => ({
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
   showRings: true, showIsobars: true, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
-  drawer: null, sens: null, sensBusy: false,
+  drawer: null, sens: null, sensBusy: false, menuOpen: false, meteo: false, focus: null,
 
   set: (p) => set(p),
   setUnits: (u) => set((s) => ({ units: { ...s.units, ...u } })),
@@ -97,7 +101,7 @@ export const useStore = create<Store>((set, get) => ({
     const control: Universe = { id: CONTROL, name: 'Control', perturbation: null, box: null, rollout: null, verdict: null, status: 'loading' }
     set({
       windowId: id, init, doy, truth: w.truth ? flatten(w.truth) : null, clim: w.clim ? flatten(w.clim) : null,
-      universes: { [CONTROL]: control }, order: [CONTROL], selected: CONTROL, tf: 0, pin: null, sens: null, drawnBox: null,
+      universes: { [CONTROL]: control }, order: [CONTROL], selected: CONTROL, tf: 0, pin: null, sens: null, drawnBox: null, meteo: false,
     })
     try {
       const r = await simulate(init, doy, null)
