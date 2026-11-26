@@ -14,7 +14,7 @@
 | Gate 2: network passes causality, beats ridge | T+5:00 | pass | all 4 seasons, both official shocks, strict thresholds |
 | v0.2: calibrated, all release gates | T+7:00 | pass | tag v0.2 |
 | Freeze | T+10:00 | pending | |
-| Gate 4: brief 2 pages | T+11:00 | pending | |
+| Gate 4: brief 2 pages | T+11:00 | pass | `brief/wethrfork-brief.pdf`, 2 pages, source `brief/brief.html` |
 | Submitted | T+11:30 | pending | |
 
 ## Latest self-grade (2021, out-of-sample; calibration fitted on 2020)
@@ -55,4 +55,5 @@ DECISIONS D31 to D35.
 | 1 | Natural-experiment pressure response does not match the composite | P1 | reported, not tuned |
 | 2 | Day-8 skill is about climatology by design | P1 | accepted |
 | 3 | Dashboard: Timeline Prime, Validation tab, sensitivity overlay not built | P3 | open |
-| 4 | Brief (2 pages) not written | P3 | open |
+| 4 | Brief: team name is a placeholder ("Team Wethrfork"); render with headless Chrome from `brief/brief.html` | P3 | open |
+| 5 | Monsoon-stall fork raises west-coast rain in one monsoon window; unexplained, expect a judge question | P1 | open |
