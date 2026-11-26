@@ -2,58 +2,58 @@
 
 | Field | Value |
 | --- | --- |
-| Current phase | Phase 4 complete (calibrated model), dashboard and brief in progress |
-| Current tag | v0.2 |
-| Last updated | v0.2 release (automated session) |
+| Current phase | Hardening done; submission candidate |
+| Current tag | v1.1 (after this round of testing) |
+| Model | `wethrfork-v1.1-speedlimit`: skill network + ridge (forecast), fine-tuned dynamics network (shock response) |
 
 ## Gates
-| Gate | Target time | Status | Notes |
-| --- | --- | --- | --- |
-| Gate 1: validator + scan 15/15 | T+2:00 | pass | validator green, scan 15.0 / 15 with the dashboard committed |
-| v0.1: ridge qualifies | T+3:00 | pass | tag v0.1 (ridge only: 2021 mean skill 0.099) |
-| Gate 2: network passes causality, beats ridge | T+5:00 | pass | all 4 seasons, both official shocks, strict thresholds |
-| v0.2: calibrated, all release gates | T+7:00 | pass | tag v0.2 |
-| Freeze | T+10:00 | pending | |
-| Gate 4: brief 2 pages | T+11:00 | pass | `brief/wethrfork-brief.pdf`, 2 pages, source `brief/brief.html` |
-| Submitted | T+11:30 | pending | |
+| Gate | Status | Notes |
+| --- | --- | --- |
+| Gate 1: validator + scan 15/15 | pass | validator green; scan 15.0 / 15, no flags |
+| v0.1: ridge qualifies | pass | ridge only: 2021 mean skill 0.099 |
+| Gate 2: network passes causality, beats ridge | pass | all seasons, both official shocks |
+| v0.2: calibrated, all release gates | pass | |
+| Official-shock sweep (all 71 held-out windows) | pass | 15.00 / 15 causality points in every window (was 14.34 before the dynamics fine-tune) |
+| Judge-like container (clean clone, no network, read-only, 4 CPUs, 6 GB) | pass | ready in 3 s, valid output, null difference 0.0 |
+| Brief 2 pages | pass | `brief/wethrfork-brief.pdf` |
 
-## Latest self-grade (2021, out-of-sample; calibration fitted on 2020)
+## Self-grade, 2021 (network and ridge never saw 2021)
 | Metric | Day 1 | Day 4 | Day 8 | Mean / points |
 | --- | --- | --- | --- | --- |
-| RMSE skill (mean over channels) | 0.222 | 0.036 | -0.009 | mean_ss 0.134 (30.0 / 30) on 71 windows; typed windows 0.173 |
-| CSI skill (10 mm/day) | | | | 0.075 (11.3 / 15); typed 0.157 |
-| Variance ratio day 8 by channel (t2m, tp, u10, v10, msl, tcwv) | | | [1.01, 0.68, 0.71, 0.78, 0.85, 0.9] | anti-blur 10.0 / 10 |
+| RMSE skill vs best of persistence/climatology (calibration fitted on 2020) | 0.222 | 0.036 | -0.009 | 0.134 (30 / 30) |
+| CSI skill at 10 mm/day | 0.092 | 0.019 | -0.013 | 0.075 (11.3 / 15) |
+| Day-4 skill vs persistence, by channel (t2m, tp, u10, v10, msl, tcwv) | | 0.22, 0.26, 0.26, 0.30, 0.23, 0.24 | | beats persistence on every channel |
+| Day-8 variance ratio (t2m, tp, u10, v10, msl, tcwv) | | | 1.01, 0.68, 0.71, 0.78, 0.85, 0.91 | anti-blur 10 / 10 |
 
-Note: the held-out 2021 numbers are the honest estimate. Windows are every 5th day; per-window skill follows the kit.
+Leakage check: the climatology and normalisation statistics are computed over 2005-2021 (like the judge's reference).
+Rebuilding the climatology from 2005-2020 only and re-grading 2021 changes mean skill 0.1335 to 0.1326 and CSI skill
+0.080 to 0.072 (shipped calibration). Negligible.
 
 ## Causality gate (per season, strict thresholds: near >= 0.75, growth >= 3x, far <= 0.01, max z <= 4)
 | Season | warm_ocean near / growth / max z | monsoon_stall near / growth / max z |
 | --- | --- | --- |
-| DJF | 0.99 / 78.7 / 1.69 | 1.00 / 464 / 2.18 |
-| MAM | 1.00 / 69.0 / 3.51 | 1.00 / 41.6 / 0.38 |
-| JJAS | 1.00 / 72.2 / 3.67 | 1.00 / 60.6 / 2.98 |
-| ON | 1.00 / 18.8 / 3.38 | 1.00 / 12.2 / 1.19 |
+| DJF | 0.99 / 70 / 1.82 | 1.00 / 3423 / 2.04 |
+| MAM | 1.00 / 79 / 1.47 | 1.00 / 202 / 0.29 |
+| JJAS | 1.00 / 71 / 3.77 | 1.00 / 163 / 3.08 |
+| ON | 1.00 / 23 / 3.55 | 1.00 / 20 / 1.30 |
 
-Null shock: max difference exactly 0.0 in every season.
+Null shock: max difference exactly 0.0 in every season and in all 71 sweep windows.
 
 ## Engineering
 | Check | Value |
 | --- | --- |
-| Repo scan | 15.0 / 15, no flags |
-| Latency 10 steps (shocked, with JSON, local) | about 0.18 s wall, 121 ms in server |
-| Fuzz validity / causality pass | 1.00 / 0.95 over 60 shocks |
-| Artifact sizes | ridge 8.1 MB, climatology 10.1 MB, two networks 1.6 MB each |
-| Natural experiment (warm and moist Bay days, day 2) | 60 events; rain response same sign as the observed composite (pattern corr 0.28); pressure: model falls, observed composite about zero (corr -0.04). Reported as is. |
-
-## Architecture as shipped
-Skill: PP(Blend(skill network, ridge)). Shock delta: limiter(dynamics network(shocked) - dynamics network(base)). See
-DECISIONS D31 to D35.
+| Tests | 79 pass (includes 40 HTTP edge cases: malformed bodies, wrong shapes, NaN/Inf, 1e30 values, odd steps, Feb 29 / Dec 31) |
+| Malformed requests | clean 400/422 JSON errors (were 500 before this round) |
+| Latency, 10 steps shocked | about 0.18 s wall with JSON; 8 concurrent shocked calls all succeed |
+| Fuzz | 200 random shocks: validity 100%, causality 99.5% (rain shocks 94%, 40%-relative shocks 96% are the weakest) |
+| Natural experiment (60 warm, moist Bay days, day 2) | rain pattern r = 0.31 (same sign in the Bay); pressure r = -0.07 (no match) |
+| Monsoon-stall rain | same break-then-revival sequence as the data; dynamics network about 2x the observed size by day 8 |
+| Repo scan | 15.0 / 15 |
 
 ## Open issues
-| # | Issue | Owner | Status |
-| --- | --- | --- | --- |
-| 1 | Natural-experiment pressure response does not match the composite | P1 | reported, not tuned |
-| 2 | Day-8 skill is about climatology by design | P1 | accepted |
-| 3 | Dashboard rebuilt Windy-style: map with particles, isobars, delta, compare, draw-a-shock, point forecast, sensitivity overlay; Timeline Prime, Validation (with live light-cone test) and About tabs | P3 | closed |
-| 4 | Brief done (team Return0;); re-render with headless Chrome from `brief/brief.html` after edits | P3 | closed |
-| 5 | Monsoon-stall fork raises west-coast rain from day 4: explained. Data shows the same break-then-revival sequence after weak Arabian Sea flow (rain -1.4 day 1, +1.8 day 10, 311 cases); model: -0.4 day 1, +1.5 to +2.4 day 8 to 10; learned correlation, late response about 1.4x observed (dynamics network). See Q&A 20 | P1 | explained, stated as a limit |
+| # | Issue | Status |
+| --- | --- | --- |
+| 1 | Pressure response does not match the natural-experiment composite | stated as a limit |
+| 2 | Day-8 skill is about climatology | by design |
+| 3 | Stall rain response about 2x observed after the dynamics fine-tune (was 1.4x); previous weights kept outside the repo for a revert | stated as a limit; Q&A 20 |
+| 4 | Dashboard tested at 1500-1600 px wide; smaller screens only lightly handled | check on the demo laptop |
