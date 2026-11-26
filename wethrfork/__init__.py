@@ -1,4 +1,4 @@
 """Wethrfork: a weather model with a speed limit."""
 
-__version__ = "0.1.0"
-MODEL_NAME = "wethrfork-v0.1-speedlimit"
+__version__ = "1.0.0"
+MODEL_NAME = "wethrfork-v1.0-speedlimit"
