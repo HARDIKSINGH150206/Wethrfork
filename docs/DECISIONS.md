@@ -139,3 +139,19 @@ client-side ensembles, final refit, variance-matching loss.
 
 ### D30. Cut order under time pressure
 Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to 4 of the differentiator list are the pitch.
+
+### D31. Reach is bounded in Chebyshev distance; the judge's Euclidean radius still holds
+- **Decision**: the guarantee we state and test is: per step the network cannot move information more than 8 cells in
+  Chebyshev (max-axis) distance (4 displacement cap, 1 bilinear, 3 from three 3x3 convolutions). Euclidean reach of a
+  single cell can reach about 9.7 cells in the worst diagonal case, still inside the judge's 3 + 8 (k + 1) radius for the
+  first step; `tests/test_lightcone.py` asserts both the Chebyshev bound and the judge radius.
+- **Why**: three 3x3 convolutions reach Chebyshev 3, which is up to 4.24 Euclidean on the diagonal. The earlier text
+  ("at most 8 cells, Euclidean") is a slight simplification; this entry supersedes it for the brief.
+
+### D32. Calibration measured on physical-space error, rain scale chosen by calibration-year CSI
+- **Decision**: blend weights minimise latitude-weighted physical MSE (not normalised-space MSE, which is a log scale for
+  rain). The per-lead rain scale above 5 mm is chosen to maximise CSI at 10 mm/day on the calibration year, then
+  smoothed over three leads. The documented bias targets in `configs/calib.yaml` remain as priors that the log reports.
+
+### D33. Ridge lambda grid extended to 1e4
+- **Decision**: the first grid (0.1 to 100) hit its upper edge at most leads. The grid now runs to 10000.

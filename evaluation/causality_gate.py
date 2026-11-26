@@ -1,4 +1,5 @@
 """Per-season causality gate for both official shocks, with thresholds stricter than the judge's."""
+
 from __future__ import annotations
 
 import argparse

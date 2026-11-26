@@ -1,4 +1,5 @@
 """Run the official repo scan on the committed files only; fail below 15 points or on any flag."""
+
 from __future__ import annotations
 
 import json

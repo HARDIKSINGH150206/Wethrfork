@@ -1,4 +1,5 @@
 """Self-grade with the official kit scoring functions. Calls Engine.simulate directly (no HTTP)."""
+
 from __future__ import annotations
 
 import argparse
@@ -44,7 +45,11 @@ def grade(engine: Engine, wins: list[dict], steps: int = 10) -> dict:
         for k in LEADS:
             s_k = S.skill_vs_best_ref(pred[[k]], w["truth"][[k]], persist[[k]], climr[[k]])
             per_lead[k].append(s_k["ss"])
-            c = S.csi_skill(S.csi(pred[k, 1], w["truth"][k, 1]), S.csi(persist[k, 1], w["truth"][k, 1]), S.csi(climr[k, 1], w["truth"][k, 1]))
+            c = S.csi_skill(
+                S.csi(pred[k, 1], w["truth"][k, 1]),
+                S.csi(persist[k, 1], w["truth"][k, 1]),
+                S.csi(climr[k, 1], w["truth"][k, 1]),
+            )
             csi_lead[k].append(c)
         csi_w.append(
             S.csi_skill(
@@ -69,7 +74,9 @@ def grade(engine: Engine, wins: list[dict], steps: int = 10) -> dict:
         "var_ratio_day8_mean": np.nanmean(ratios, axis=0).tolist(),
         "ss_by_lead_channel": ss_lead,
         "ss_lead_mean": {k: float(np.nanmean(v)) for k, v in ss_lead.items()},
-        "csi_skill_by_lead": {int(k) + 1: float(np.nanmean(v)) if np.isfinite(v).any() else None for k, v in csi_lead.items()},
+        "csi_skill_by_lead": {
+            int(k) + 1: float(np.nanmean(v)) if np.isfinite(v).any() else None for k, v in csi_lead.items()
+        },
         "mean_ms": float(np.mean(t_ms)),
     }
 
