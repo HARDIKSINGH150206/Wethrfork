@@ -46,6 +46,7 @@ class Engine:
         self.static_t: torch.Tensor | None = None
         self.ridge: RidgeHead | None = None
         self.net: SpeedLimitNet | None = None
+        self.dyn: SpeedLimitNet | None = None  # optional separate network for the shock response
         self.pp = PostProc()
         self.clim_std: np.ndarray | None = None
         self.kit_std: np.ndarray | None = None
@@ -96,6 +97,14 @@ class Engine:
             net.load_state_dict(torch.load(nn_p, map_location="cpu", weights_only=True))
             self.net = net.eval()
             for p in self.net.parameters():
+                p.requires_grad_(False)
+        dyn_p = d / "nn_dyn.pt"
+        if dyn_p.exists():
+            dcfg = NetConfig(**json.loads((d / "nn_dyn_config.json").read_text()))
+            dyn = SpeedLimitNet(dcfg)
+            dyn.load_state_dict(torch.load(dyn_p, map_location="cpu", weights_only=True))
+            self.dyn = dyn.eval()
+            for p in self.dyn.parameters():
                 p.requires_grad_(False)
         if self.ridge is None and self.net is None:
             raise RuntimeError("no ridge.pt or nn.pt found in artifacts")
@@ -171,8 +180,13 @@ class Engine:
         skill = from_z(torch.from_numpy(zf), clim_tgt, self.s).numpy()
         skill[:, 1] = self.pp.map_rain(skill[:, 1])
 
-        if shocked and nn_phys is not None:
-            delta = np.nan_to_num(nn_phys[1] - nn_phys[0]).astype(np.float32)
+        dyn_phys = None
+        if shocked and self.dyn is not None:  # dynamics head: a second local network, batch of 2
+            zd = rollout(self.dyn, z0, slots_t.expand(len(xs), -1), self.clim_t, self.s, self.static_t, steps)
+            dyn_phys = from_z(zd, clim_tgt.unsqueeze(0), self.s).numpy()
+        resp = dyn_phys if dyn_phys is not None else nn_phys
+        if shocked and resp is not None:
+            delta = np.nan_to_num(resp[1] - resp[0]).astype(np.float32)
             if self.kit_std is not None:
                 delta = limit_delta(delta, self.kit_std)
         elif shocked:  # ridge-only fallback: response lives inside the shock box only
