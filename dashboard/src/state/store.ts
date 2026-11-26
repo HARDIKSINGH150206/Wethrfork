@@ -77,7 +77,7 @@ export const useStore = create<Store>((set, get) => ({
   meta: null, windows: [], windowId: null, init: null, doy: null, truth: null, clim: null,
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
-  showRings: true, showIsobars: true, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
+  showRings: true, showIsobars: false, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
   drawer: null, sens: null, sensBusy: false, menuOpen: false, meteo: false, focus: null,
 
   set: (p) => set(p),

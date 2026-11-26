@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CELLS } from '../../lib/grid'
-import { LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, sample } from '../../lib/interp'
+import { LAT_MAX, LAT_MIN, LON_MAX, LON_MIN } from '../../lib/interp'
 import { LAYERS, SENS_LAYER, scalarAt, windAt } from '../../lib/layers'
 import { ParticleSystem } from '../../lib/particles'
 import { coastline, contourLines, makeRaster, paintBase, paintField } from '../../lib/render'
@@ -9,7 +9,8 @@ import { deltaScale } from '../../lib/series'
 import { CONTROL, useStore } from '../../state/store'
 import type { View } from '../../lib/view'
 import { fitView, panBy, projX, projY, unprojLat, unprojLon, zoomAt } from '../../lib/view'
-import { PointPopup } from './PointPopup'
+import { PointPicker } from './PointPicker'
+import { CITIES, SEAS } from '../../lib/cities'
 
 const snap = (v: number) => 6.5 + Math.round(v - 6.5)
 const snapLon = (v: number) => 65.5 + Math.round(v - 65.5)
@@ -22,12 +23,11 @@ export function MapStage() {
   const [view, setView] = useState<View>(() => fitView(800, 600))
   const viewRef = useRef(view)
   viewRef.current = view
-  const [hover, setHover] = useState<{ x: number; y: number } | null>(null)
   const [outline, setOutline] = useState<Polyline | null>(null)
   const [dragBox, setDragBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
 
   const s = useStore()
-  const { meta, universes, selected, layer, units, delta, compare, compareX, tf, showRings, showIsobars, showStipple, pin, sens, drawMode, drawnBox } = s
+  const { meta, universes, selected, layer, delta, compare, compareX, tf, showRings, showIsobars, showStipple, pin, sens, drawMode, drawnBox, focus } = s
   const ctl = universes[CONTROL]?.rollout ?? null
   const uni = universes[selected]?.rollout ?? null
   const box = universes[selected]?.box ?? null
@@ -56,6 +56,14 @@ export function MapStage() {
     return () => ro.disconnect()
   }, [])
 
+  useEffect(() => {
+    if (!focus) return
+    setView((v) => {
+      const base0 = fitView(v.w, v.h).scale
+      return { ...v, scale: base0 * focus.zoom, cx: focus.lon, cy: focus.lat }
+    })
+  }, [focus])
+
   const deltaMax = useMemo(() => (delta && ctl && uni && uni !== ctl ? deltaScale(uni, ctl, layer, LAYERS[layer].deltaFloor) : 1), [delta, ctl, uni, layer])
   const sigma = useMemo(() => (meta?.sigma_err ? Float32Array.from(meta.sigma_err.flat(3)) : null), [meta])
 
@@ -72,18 +80,12 @@ export function MapStage() {
     cv.width = size.w * dpr; cv.height = size.h * dpr
     const g = cv.getContext('2d')!
     g.setTransform(dpr, 0, 0, dpr, 0, 0)
-    g.fillStyle = '#060d17'
+    g.fillStyle = '#25272b'
     g.fillRect(0, 0, size.w, size.h)
-    g.fillStyle = 'rgba(120,160,210,0.10)'
-    for (let gx = (projX(view, LON_MIN) % 24) - 24; gx < size.w; gx += 24) for (let gy = (projY(view, LAT_MAX) % 24) - 24; gy < size.h; gy += 24) g.fillRect(gx, gy, 1.5, 1.5)
     const x0 = projX(view, LON_MIN), y0 = projY(view, LAT_MAX)
     const W = (LON_MAX - LON_MIN) * view.scale, H = (LAT_MAX - LAT_MIN) * view.scale
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'
-    g.save(); g.shadowColor = 'rgba(76,194,255,0.35)'; g.shadowBlur = 24; g.fillStyle = '#0a1524'; g.fillRect(x0, y0, W, H); g.restore()
     g.drawImage(base, x0, y0, W, H)
-    g.strokeStyle = 'rgba(76,194,255,0.45)'; g.lineWidth = 1.2; g.strokeRect(x0, y0, W, H)
-    g.font = '600 9.5px system-ui'; g.fillStyle = 'rgba(143,164,187,0.8)'
-    g.fillText('MODEL DOMAIN · 6–38°N · 65–101°E · 1° GRID', x0 + 8, y0 - 6)
 
     const def = LAYERS[layer]
     const aField = uni ? scalarAt(uni, tf, layer) : null
@@ -122,18 +124,9 @@ export function MapStage() {
       if (close) g.closePath()
       g.stroke()
     }
-    g.lineWidth = 0.8; g.strokeStyle = 'rgba(255,255,255,0.22)'
+    g.lineWidth = 1; g.strokeStyle = 'rgba(0,0,0,0.42)'
     coast.forEach((l) => strokeLine(l))
-    if (outline) { g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,0.7)'; strokeLine(outline, true) }
-
-    // graticule
-    g.font = '10px system-ui'; g.fillStyle = 'rgba(200,215,235,0.55)'; g.strokeStyle = 'rgba(160,185,215,0.12)'; g.lineWidth = 1
-    for (let lon = 70; lon <= 100; lon += 5) {
-      const x = projX(view, lon); g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y0 + H); g.stroke(); g.fillText(`${lon}°E`, x + 3, y0 + H - 4)
-    }
-    for (let lat = 10; lat <= 35; lat += 5) {
-      const y = projY(view, lat); g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + W, y); g.stroke(); g.fillText(`${lat}°N`, x0 + 4, y - 3)
-    }
+    if (outline) { g.lineWidth = 1.3; g.strokeStyle = 'rgba(0,0,0,0.55)'; strokeLine(outline, true) }
 
     // isobars
     if (showIsobars && uni) {
@@ -192,11 +185,27 @@ export function MapStage() {
       g.strokeRect(projX(view, drawnBox[2] - 0.5), projY(view, drawnBox[1] + 0.5), (drawnBox[3] - drawnBox[2] + 1) * view.scale, (drawnBox[1] - drawnBox[0] + 1) * view.scale)
       g.setLineDash([])
     }
+    // places, drawn last so they sit above every layer
+    const base0 = fitView(size.w, size.h).scale
+    const z = view.scale / base0
+    g.textBaseline = 'middle'
+    g.font = 'italic 500 12px system-ui'; g.fillStyle = 'rgba(255,255,255,0.45)'
+    for (const s2 of SEAS) g.fillText(s2.name, projX(view, s2.lon), projY(view, s2.lat))
+    for (const c of CITIES) {
+      if (c.rank === 3 && z < 1.5) continue
+      const cx = projX(view, c.lon), cy = projY(view, c.lat)
+      if (cx < 0 || cy < 0 || cx > size.w || cy > size.h) continue
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, c.rank === 1 ? 2.6 : 2, 0, Math.PI * 2); g.fill()
+      g.font = `${c.rank === 1 ? 600 : 500} ${c.rank === 1 ? 13 : 12}px system-ui`
+      g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.strokeText(c.name, cx + 6, cy)
+      g.fillStyle = '#fff'; g.fillText(c.name, cx + 6, cy)
+    }
+    g.textBaseline = 'alphabetic'
     if (compare && !isDelta) {
       g.font = '600 11px system-ui'; g.fillStyle = 'rgba(255,255,255,0.85)'
       g.fillText('CONTROL', 14, 86); g.fillText(`UNIVERSE · ${universes[selected]?.name ?? ''}`.toUpperCase(), compareX * size.w + 14, 86)
     }
-  }, [view, size, layer, units, delta, compare, compareX, tf, selected, universes, showIsobars, showStipple, showRings, sens, drawnBox, deltaMax, meta, outline, coast, base, rA, rB, rS, sigma, uni, ctl, box])
+  }, [view, size, layer, delta, compare, compareX, tf, selected, universes, showIsobars, showStipple, showRings, sens, drawnBox, deltaMax, meta, outline, coast, base, rA, rB, rS, sigma, uni, ctl, box])
 
   // ---------------------------------------------------------------- particles
   const sysA = useRef(new ParticleSystem()), sysB = useRef(new ParticleSystem())
@@ -254,7 +263,6 @@ export function MapStage() {
   }
   const onMove = (e: React.PointerEvent) => {
     const p = rel(e)
-    setHover(p)
     const d = drag.current
     if (!d) return
     if (Math.abs(p.x - d.x) + Math.abs(p.y - d.y) > 3) d.moved = true
@@ -279,34 +287,14 @@ export function MapStage() {
     }
   }
 
-  // hover readout
-  const readout = useMemo(() => {
-    if (!hover || !cur.current) return null
-    const lat = unprojLat(view, hover.y), lon = unprojLon(view, hover.x)
-    if (lat < LAT_MIN || lat > LAT_MAX || lon < LON_MIN || lon > LON_MAX) return null
-    const def = LAYERS[layer]
-    const a = sample(cur.current.a, lat, lon), b = sample(cur.current.b, lat, lon)
-    return { lat, lon, a, b, text: def.fmt(a, units), dtext: selected !== CONTROL ? def.fmt(a - b, units, true) : null }
-  }, [hover, view, layer, units, selected, tf, uni, ctl])
-
   const pinXY = pin ? { x: projX(view, pin.lon), y: projY(view, pin.lat) } : null
   const divX = compareX * size.w
 
   return (
-    <div ref={wrap} className={`stage ${drawMode ? 'drawing' : ''}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => setHover(null)}
+    <div ref={wrap} className={`stage ${drawMode ? 'drawing' : ''}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}
       onDoubleClick={(e) => { const p = rel(e); setView((v) => zoomAt(v, p.x, p.y, 1.8)) }}>
       <canvas ref={scene} style={{ width: size.w, height: size.h }} />
       <canvas ref={parts} style={{ width: size.w, height: size.h }} className="parts" />
-      {hover && readout && (
-        <>
-          <div className="cross" style={{ left: hover.x, top: hover.y }} />
-          <div className="readout" data-ui>
-            <b>{readout.text}</b>
-            {readout.dtext && <span className={readout.a - readout.b >= 0 ? 'up' : 'down'}> {readout.a - readout.b >= 0 ? '▲' : '▼'} {readout.dtext}</span>}
-            <small>{readout.lat.toFixed(2)}°N {readout.lon.toFixed(2)}°E</small>
-          </div>
-        </>
-      )}
       {compare && !delta && (
         <div className="divider" style={{ left: divX }} data-ui
           onPointerDown={(e) => { e.stopPropagation(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }}
@@ -314,7 +302,7 @@ export function MapStage() {
       )}
       {dragBox && <div className="dragbox" style={{ left: Math.min(dragBox.x0, dragBox.x1), top: Math.min(dragBox.y0, dragBox.y1), width: Math.abs(dragBox.x1 - dragBox.x0), height: Math.abs(dragBox.y1 - dragBox.y0) }} />}
       {pinXY && <div className="pin" style={{ left: pinXY.x, top: pinXY.y }}><span /></div>}
-      {pin && pinXY && <PointPopup pin={pin} x={pinXY.x} y={pinXY.y} bounds={size} />}
+      {pin && pinXY && <PointPicker pin={pin} x={pinXY.x} y={pinXY.y} />}
       <div className="zoom" data-ui>
         <button onClick={() => setView((v) => zoomAt(v, size.w / 2, size.h / 2, 1.5))} aria-label="Zoom in">+</button>
         <button onClick={() => setView((v) => zoomAt(v, size.w / 2, size.h / 2, 1 / 1.5))} aria-label="Zoom out">−</button>

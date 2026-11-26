@@ -12,9 +12,9 @@ export class ParticleSystem {
   private px: Float32Array
   private py: Float32Array
   private n: number
-  private maxAge = 90
+  private maxAge = 110
 
-  constructor(n = 4500) {
+  constructor(n = 7000) {
     this.n = n
     this.lon = new Float32Array(n); this.lat = new Float32Array(n); this.age = new Float32Array(n)
     this.px = new Float32Array(n); this.py = new Float32Array(n)
@@ -32,7 +32,7 @@ export class ParticleSystem {
 
   /** Advance and draw one frame. `visSeconds` is how much simulated time one frame stands for. */
   step(g: CanvasRenderingContext2D, u: Float32Array, v: Float32Array, view: View, dpr: number, visSeconds = 2400) {
-    g.lineWidth = 1.15 * dpr
+    g.lineWidth = 0.95 * dpr
     for (let i = 0; i < this.n; i++) {
       if (++this.age[i] > this.maxAge) { this.spawn(i); continue }
       const lat = this.lat[i], lon = this.lon[i]
@@ -45,7 +45,7 @@ export class ParticleSystem {
       const x0 = this.px[i], y0 = this.py[i]
       const x1 = projX(view, nl) * dpr, y1 = projY(view, nt) * dpr
       if (!Number.isNaN(x0)) {
-        const a = Math.min(0.2 + sp / 14, 0.95)
+        const a = Math.min(0.35 + sp / 16, 0.85)
         g.strokeStyle = `rgba(255,255,255,${a.toFixed(2)})`
         g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke()
       }
