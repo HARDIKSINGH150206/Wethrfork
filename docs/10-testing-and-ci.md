@@ -99,3 +99,21 @@ scipy, pandas, xarray, scikit-learn, lightgbm, onnxruntime, fastapi, flask, uvic
 | v0.1 | CI green, validator, scan 15/15, self-grade beats persistence at day 4 |
 | v0.2 | v0.1 + light cone, causality gate all seasons, fuzz validity 100%, release gates in doc 08 |
 | v1.0 | v0.2 + `make judge` + clean clone run + brief committed |
+
+## 7. Strict judge testing (D43)
+
+Three layers, each built on the organisers' own code (the kit's client, schema validator and scoring), with our margins
+on top. Thresholds live in `configs/rehearsal.yaml` ("judge" = the organisers' limits, "strict" = ours).
+
+| Layer | Command | Needs | What it proves |
+| --- | --- | --- | --- |
+| Judge-contract tests | `pytest tests/test_judge_contract.py` (part of `make test` and CI) | artifacts only | The server starts from a **read-only** copy of only `serve.py`, `wethrfork/`, `artifacts/`, with the kit, HTTP clients, plotting libraries and `training/`, `evaluation/`, `lab/` made unimportable and HOME read-only; the kit's schema validator passes; `/health` is exactly `{status, model_name}`; steps 1 to 14 give the exact shape, nested lists and a numeric `inference_ms`; base64 and lists give identical answers; null shock and repeated calls identical bit for bit; both official shocks local (near >= 0.75), no teleport, max z <= 4; the serve import graph uses only allowed libraries |
+| Judge rehearsal | `make rehearsal` (`--worktree` for uncommitted code) | data + Docker | The organisers' procedure on a clean copy of git HEAD: server in `wethrfork-judge:py311` (Python 3.11, allowed libraries only, no kit) with **no network, read-only repo and root filesystem, 4 CPUs, 6 GB**; a grader container makes 120 calls with the kit's client (5 s deadline, no retries) over every held-out 2021 window, the judge's window types and one window per season, the three official shocks on 10 windows, both wire forms, steps 1 to 14, and the kit validator; scored with `monsoon_r1.scoring`. Also: ready time, peak memory, server log, determinism, container-versus-dev drift, and the day-of-year convention (counted from 0 or 1) |
+| Release check | `make release-check` (`make release-check-quick` without data) | data + Docker + npm | lint, all tests, repo scan, preflight, causality gate, all-window sweep, fuzz (validity 100 %, pass rate >= 0.95), self-grade (valid, mean skill >= 0.12, CSI >= 0.05, day-8 ratio in [0.5, 2.0]), rehearsal, dashboard tests and build. Exit 0 only if every step passes; a skipped step gives exit 2 |
+
+**The tests are proven to fail.** Five deliberately broken copies of the server (importing the kit, writing into the
+repo at start-up, random noise on the answer, a 2 s delay, negative rain) were each rejected by the rehearsal, and the
+four that break the contract also by the judge-contract tests. When you change a gate, re-run such a check: a gate that
+cannot fail protects nothing.
+
+Before every tag: `make release-check` must print `RELEASE CHECK: PASS`; paste the summary into `docs/STATUS.md`.
