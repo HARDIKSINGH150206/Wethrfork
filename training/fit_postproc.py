@@ -92,12 +92,13 @@ def main() -> None:
         obs = fc.truth_phys[:, k, TP]
         n_obs = max(int((obs > 10).sum()), 1)
         best, best_c = 1.0, -1.0
-        for f in np.arange(0.8, 1.81, 0.05):
+        for f in np.arange(0.8, 2.01, 0.05):  # smallest scale that reaches the frequency-bias target
             m = np.where(mapped > 5, 5 + (mapped - 5) * f, mapped)
-            c = csi(m, obs)
-            c = 0.0 if np.isnan(c) else c
-            if c > best_c:
-                best_c, best = c, float(f)
+            best = float(f)
+            if (m > 10).sum() / n_obs >= bias_t[k]:
+                break
+        c = csi(np.where(mapped > 5, 5 + (mapped - 5) * best, mapped), obs)
+        best_c = 0.0 if np.isnan(c) else c
         m = np.where(mapped > 5, 5 + (mapped - 5) * best, mapped)
         log.info(
             "lead %d: rain scale %.2f csi %.3f freq bias %.2f (prior target %.2f)",
