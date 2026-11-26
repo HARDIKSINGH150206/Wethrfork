@@ -24,14 +24,15 @@ export function panBy(v: View, dx: number, dy: number): View {
   return { ...v, cx: v.cx - dx / v.scale, cy: v.cy + dy / v.scale }
 }
 
-/** Fill the screen edge to edge (the model domain covers the viewport, as a weather map does). */
-export function coverView(w: number, h: number, bottom = 44): View {
+/** Fill the screen edge to edge (the model domain covers the viewport, as a weather map does). The timeline floats
+ *  over the map, so no strip is reserved for it by default. */
+export function coverView(w: number, h: number, bottom = 0): View {
   const s = Math.max(w / (LON_MAX - LON_MIN), (h - bottom) / (LAT_MAX - LAT_MIN))
   return clampView({ scale: s, cx: 82.5, cy: 21.5, w, h }, bottom)
 }
 
 /** Keep the data under the whole screen when zoomed in at least to "cover"; otherwise centre the domain. */
-export function clampView(v: View, bottom = 44): View {
+export function clampView(v: View, bottom = 0): View {
   const halfW = v.w / 2 / v.scale, halfH = v.h / 2 / v.scale
   const usableTop = LAT_MAX, usableBottom = LAT_MIN - bottom / v.scale
   let cx = v.cx, cy = v.cy

@@ -22,6 +22,7 @@ export interface Universe {
 }
 export type Tab = 'map' | 'timeline' | 'validation' | 'about'
 export type Drawer = 'shock' | 'audit' | null
+export type RailPanel = 'search' | 'settings' | 'info' | null
 export interface Pin { lat: number; lon: number }
 export interface Focus { lat: number; lon: number; zoom: number; seq: number }
 export interface Sens { map: Float32Array; lat: number; lon: number; lead: number; channel: string; top: string }
@@ -60,7 +61,7 @@ interface Store {
   drawer: Drawer
   sens: Sens | null
   sensBusy: boolean
-  menuOpen: boolean
+  panel: RailPanel
   startError: string | null
   meteo: boolean
   focus: Focus | null
@@ -88,7 +89,7 @@ export const useStore = create<Store>((set, get) => ({
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
   showRings: true, showIsobars: false, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
-  drawer: null, sens: null, sensBusy: false, menuOpen: false, startError: null, meteo: false, focus: null,
+  drawer: null, sens: null, sensBusy: false, panel: null, startError: null, meteo: false, focus: null,
 
   set: (p) => set(p),
   setUnits: (u) => set((s) => ({ units: { ...s.units, ...u } })),
