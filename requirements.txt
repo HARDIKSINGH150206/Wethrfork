@@ -1,0 +1,5 @@
+# serve-time dependencies: judge-allowed libraries only
+torch
+numpy
+fastapi
+uvicorn

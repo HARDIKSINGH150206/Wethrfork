@@ -1,0 +1,15 @@
+data/
+runs/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.nc
+*.nc4
+*.grib
+*.grib2
+*.zarr
+node_modules/
+dashboard/dist/
+.DS_Store
+.ipynb_checkpoints/

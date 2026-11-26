@@ -1,0 +1,10 @@
+-r requirements.txt
+xarray
+netCDF4
+pandas
+scipy
+pyyaml
+pytest
+ruff
+requests
+matplotlib   # evaluation/report.py only; never imported by serve.py or wethrfork/
