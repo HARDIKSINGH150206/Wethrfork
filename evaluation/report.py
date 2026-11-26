@@ -17,7 +17,7 @@ OUT = ROOT / "brief" / "figures"
 
 
 def fig_leads() -> None:
-    sg = json.loads((ROOT / "runs" / "selfgrade" / "latest.json").read_text())["systematic"]
+    sg = json.loads((ROOT / "runs" / "selfgrade" / "v02_fit2020.json").read_text())["systematic"]
     leads = sorted(int(k) for k in sg["ss_by_lead_channel"])
     ss = np.array([sg["ss_by_lead_channel"][str(k)] for k in leads])
     names = ["t2m", "tp", "u10", "v10", "msl", "tcwv"]
@@ -61,10 +61,13 @@ def fig_natural() -> None:
     for r, (key, name) in enumerate((("d_tp", "rain"), ("d_msl", "pressure"))):
         obs = np.array(ne["observed_composite"][key])[k]
         mod = np.array(ne["model_response"][key])[k]
-        ax[r, 0].imshow(obs, origin="lower", cmap="RdBu_r")
-        ax[r, 0].set_title(f"observed {name} anomaly", fontsize=8)
-        ax[r, 1].imshow(mod, origin="lower", cmap="RdBu_r")
-        ax[r, 1].set_title(f"model response (r={ne['pattern_corr']['tp' if r == 0 else 'msl']:.2f})", fontsize=8)
+        vo, vm = float(np.abs(obs).max()), float(np.abs(mod).max())
+        ax[r, 0].imshow(obs, origin="lower", cmap="RdBu_r", vmin=-vo, vmax=vo)
+        ax[r, 0].set_title(f"observed {name} anomaly (warm, moist Bay days)", fontsize=8)
+        ax[r, 1].imshow(mod, origin="lower", cmap="RdBu_r", vmin=-vm, vmax=vm)
+        ax[r, 1].set_title(
+            f"model: warm_ocean response (r={ne['pattern_corr']['tp' if r == 0 else 'msl']:.2f})", fontsize=8
+        )
     fig.tight_layout()
     fig.savefig(OUT / "natural.png", dpi=200)
 
