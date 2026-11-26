@@ -5,15 +5,18 @@ serves POST /health and POST /simulate. Offline, CPU only, deterministic.
 """
 
 import argparse
+import json
+import logging
 import time
 
 import torch
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from wethrfork.engine import Engine
-from wethrfork.io import decode_array, to_list
+from wethrfork.io import RequestError, parse_request, to_list
 
 torch.set_num_threads(4)
 try:
@@ -26,6 +29,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["POST", "
 ENGINE = Engine.load()
 
 
+@app.get("/health")
 @app.post("/health")
 def health():
     if ENGINE.ready:
@@ -38,12 +42,19 @@ def health():
 @app.post("/simulate")
 async def simulate_endpoint(request: Request):
     t0 = time.perf_counter()
-    body = await request.json()
-    init = decode_array(body["init_states"])
-    pert = body.get("perturbation")
-    pert = None if pert is None else decode_array(pert)
-    steps = int(body.get("steps", 10))
-    out = ENGINE.simulate(init, body["doy_sincos"], steps, pert)
+    try:
+        body = json.loads(await request.body())
+    except (ValueError, UnicodeDecodeError):
+        return JSONResponse({"error": "body is not valid JSON"}, status_code=400)
+    try:
+        init, doy, steps, pert = parse_request(body)
+    except RequestError as e:
+        return JSONResponse({"error": str(e)}, status_code=422)
+    try:
+        out = ENGINE.simulate(init, doy, steps, pert)  # never raises for valid shapes: falls back to the ridge head
+    except Exception as e:  # pragma: no cover - last resort, keep the answer machine-readable
+        logging.exception("simulate failed")
+        return JSONResponse({"error": f"internal error: {type(e).__name__}"}, status_code=500)
     return {"rollout": to_list(out), "inference_ms": (time.perf_counter() - t0) * 1000.0}
 
 

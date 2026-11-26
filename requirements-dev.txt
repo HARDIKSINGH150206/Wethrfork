@@ -7,4 +7,5 @@ pyyaml
 pytest
 ruff
 requests
+httpx
 matplotlib   # evaluation/report.py only; never imported by serve.py or wethrfork/

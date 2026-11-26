@@ -1,4 +1,5 @@
 """A separate dynamics network supplies the shock delta; the skill forecast and the null shock are unaffected."""
+
 from __future__ import annotations
 
 import numpy as np
