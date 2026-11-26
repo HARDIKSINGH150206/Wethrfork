@@ -109,13 +109,13 @@ export function Drawer() {
   const { drawer, set } = useStore()
   return (
     <div className={`drawer ${drawer ? 'open' : ''}`} data-ui>
-      <div className="rail">
-        <button className={drawer === 'shock' ? 'on' : ''} onClick={() => set({ drawer: drawer === 'shock' ? null : 'shock' })} title="Shocks and universes"><IconBolt /></button>
-        <button className={drawer === 'audit' ? 'on' : ''} onClick={() => set({ drawer: drawer === 'audit' ? null : 'audit' })} title="Audit and impact"><IconShield /></button>
-      </div>
       {drawer && (
         <div className="panel">
-          <h3>{drawer === 'shock' ? 'Shocks & universes' : 'Audit & impact'}</h3>
+          <div className="ptabs">
+            <button className={drawer === 'shock' ? 'on' : ''} onClick={() => set({ drawer: 'shock' })}><IconBolt /> Shocks</button>
+            <button className={drawer === 'audit' ? 'on' : ''} onClick={() => set({ drawer: 'audit' })}><IconShield /> Audit</button>
+            <button className="x" onClick={() => set({ drawer: null })} aria-label="Close">×</button>
+          </div>
           {drawer === 'shock' ? <ShockPanel /> : <AuditPanel />}
         </div>
       )}
