@@ -50,6 +50,7 @@ def _reach(k: int, i0: int, j0: int, ch: int, with_wind: bool) -> tuple[float, f
 
 
 def test_chebyshev_reach_is_at_most_8_per_step():
+    """The architectural bound: 4 (advection cap) + 1 (bilinear) + 3 (three 3x3 convolutions) cells along each axis."""
     for k in (1, 2, 3):
         for ch in (0, 1, 2, 4):
             cheb, euc = _reach(k, 16, 18, ch, with_wind=True)
@@ -57,11 +58,21 @@ def test_chebyshev_reach_is_at_most_8_per_step():
             assert cheb <= 8 * k + 1e-6
 
 
-def test_euclid_inside_judge_radius():
-    # the judge allows 3 + 8 (k + 1) cells from the box; a single cell is the tightest case
+def test_euclidean_reach_bound_is_not_eight():
+    """Chebyshev 8 per step is NOT a Euclidean 8: the worst diagonal case is 4 + sqrt(2) + 3 sqrt(2) = 9.66 cells per step.
+    This test states the honest Euclidean bound and checks the measurement stays inside it."""
+    bound = 4.0 + 4.0 * np.sqrt(2.0)
     for k in (1, 2, 3):
         _, euc = _reach(k, 16, 18, 0, with_wind=True)
-        assert euc <= 3 + 8 * (k + 1)
+        assert euc <= bound * k + 1e-6
+
+
+def test_inside_judge_radius_after_k_days():
+    """The judge allows 3 + 8 * (k + 1) cells for the 0-based day index k, i.e. 3 + 8 * d after d forecast days.
+    (An earlier version of this test used d + 1 and so allowed one extra day of travel.)"""
+    for days in (1, 2, 3):
+        _, euc = _reach(days, 16, 18, 0, with_wind=True)
+        assert euc <= 3 + 8 * days
 
 
 def test_response_exists_nearby():
