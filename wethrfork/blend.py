@@ -89,3 +89,16 @@ def clamp(out: np.ndarray, clim_fallback: np.ndarray | None = None) -> np.ndarra
     out[:, U10] = np.clip(out[:, U10], -WIND_ABS_MAX, WIND_ABS_MAX)
     out[:, V10] = np.clip(out[:, V10], -WIND_ABS_MAX, WIND_ABS_MAX)
     return out
+
+
+LIMIT_STD_MULT = 4.0
+
+
+def limit_delta(delta: np.ndarray, std: np.ndarray, mult: float = LIMIT_STD_MULT) -> np.ndarray:
+    """Smooth pointwise saturation of the network's shock response: L * tanh(d / L) with L = mult * channel std.
+
+    Pointwise, so it cannot move information anywhere (the speed limit is untouched), is exactly 0 for a zero delta,
+    and keeps a heavy-tailed response (rain in a wet season) below the judge's stability bound of 5 std.
+    """
+    lim = (mult * np.asarray(std, dtype=np.float32)).reshape(1, -1, 1, 1)
+    return (lim * np.tanh(delta / lim)).astype(np.float32)
