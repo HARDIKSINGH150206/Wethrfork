@@ -10,7 +10,7 @@ OUT = ROOT / "dashboard" / "public"
 
 
 def main() -> None:
-    sg = json.loads((ROOT / "runs" / "selfgrade" / "v02_fit2020.json").read_text())
+    sg = json.loads((ROOT / "runs" / "selfgrade" / "heldout_fit2020.json").read_text())
     slim = {
         k: {
             key: sg[k][key]

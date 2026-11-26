@@ -17,7 +17,7 @@ OUT = ROOT / "brief" / "figures"
 
 
 def fig_leads() -> None:
-    sg = json.loads((ROOT / "runs" / "selfgrade" / "v02_fit2020.json").read_text())["systematic"]
+    sg = json.loads((ROOT / "runs" / "selfgrade" / "heldout_fit2020.json").read_text())["systematic"]
     leads = sorted(int(k) for k in sg["ss_by_lead_channel"])
     ss = np.array([sg["ss_by_lead_channel"][str(k)] for k in leads])
     names = ["t2m", "tp", "u10", "v10", "msl", "tcwv"]
