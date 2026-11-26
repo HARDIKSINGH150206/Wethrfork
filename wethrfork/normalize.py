@@ -3,6 +3,7 @@
 Normalised anomaly: z = (x - clim) / s for every channel except rain, where
 z = (log1p(tp) - log1p(clim_tp)) / s_tp. `s` comes from artifacts/norm.json ("anom_std", length 6).
 """
+
 from __future__ import annotations
 
 import torch

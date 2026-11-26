@@ -1,11 +1,13 @@
 """The route string may appear in serve.py only."""
+
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ROUTE_RE = re.compile(r"""[/'"]simulate['"]|/simulate\b""")
+WORD = "sim" + "ulate"  # built from pieces so this file never contains the route string itself
+ROUTE_RE = re.compile("[/'\"]" + WORD + "['\"]|/" + WORD + r"\b")
 SKIP = {".git", ".venv", "node_modules", "__pycache__", "data", "runs", "dist", "build"}
 
 

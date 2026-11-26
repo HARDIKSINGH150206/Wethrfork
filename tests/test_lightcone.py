@@ -1,4 +1,5 @@
 """Network-only light-cone test: a one-cell change must not travel more than 8 cells per step."""
+
 from __future__ import annotations
 
 import numpy as np

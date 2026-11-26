@@ -1,4 +1,5 @@
 """Build climatology, per-cell anomaly std, normalisation constants and static fields (kit method, 366 slots)."""
+
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,5 @@
 """Shared fixtures: synthetic states and a tiny set of random artifacts so CI works before training."""
+
 from __future__ import annotations
 
 import sys

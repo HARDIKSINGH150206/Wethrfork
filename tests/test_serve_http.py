@@ -1,4 +1,5 @@
 """Start serve.py in a subprocess, poll health, post one request (path built from pieces), check shape."""
+
 from __future__ import annotations
 
 import socket
@@ -40,7 +41,12 @@ def test_http_roundtrip():
         else:
             pytest.fail("server never became ready")
         route = "/" + "sim" + "ulate"
-        body = {"init_states": make_state(0).tolist(), "doy_sincos": sincos_of_slot(190), "steps": 10, "perturbation": None}
+        body = {
+            "init_states": make_state(0).tolist(),
+            "doy_sincos": sincos_of_slot(190),
+            "steps": 10,
+            "perturbation": None,
+        }
         r = requests.post(base + route, json=body, timeout=10)
         assert r.status_code == 200
         out = np.asarray(r.json()["rollout"])

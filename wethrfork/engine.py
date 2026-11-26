@@ -3,13 +3,14 @@
 A null perturbation skips the shocked run, so the delta is exactly zero and the output equals the plain call.
 The engine is deterministic: no dropout, no sampling, no noise.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 import torch
@@ -50,7 +51,7 @@ class Engine:
 
     # ------------------------------------------------------------------ loading
     @classmethod
-    def load(cls, artifacts_dir: Path | str | None = None, warmup: bool = True, verify: bool = True) -> "Engine":
+    def load(cls, artifacts_dir: Path | str | None = None, warmup: bool = True, verify: bool = True) -> Engine:
         eng = cls()
         d = Path(artifacts_dir) if artifacts_dir else ARTIFACTS
         try:
@@ -171,7 +172,9 @@ class Engine:
             delta = np.nan_to_num(nn_phys[1] - nn_phys[0]).astype(np.float32)
         elif shocked:  # ridge-only fallback: response lives inside the shock box only
             z_r2 = self.ridge.predict(z0[1], slots_t[0, 1:]).numpy()
-            delta = (from_z(torch.from_numpy(z_r2), clim_tgt, self.s) - from_z(torch.from_numpy(z_ridge), clim_tgt, self.s)).numpy()
+            delta = (
+                from_z(torch.from_numpy(z_r2), clim_tgt, self.s) - from_z(torch.from_numpy(z_ridge), clim_tgt, self.s)
+            ).numpy()
         else:
             delta = np.zeros_like(skill)
         out = clamp(skill + delta, self.clim[slots[1:]])

@@ -1,4 +1,5 @@
 """Ridge skill head: one linear model per (lead, channel, cell) on 21 local features. Never used for shock deltas."""
+
 from __future__ import annotations
 
 import math

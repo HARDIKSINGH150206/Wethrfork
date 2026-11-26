@@ -1,4 +1,5 @@
 """No Python file in the repo may contain a date literal or a dated constructor call."""
+
 from __future__ import annotations
 
 import re

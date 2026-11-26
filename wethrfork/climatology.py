@@ -1,7 +1,8 @@
 """Day-of-year arithmetic and climatology lookup by slot (366 slots, Feb 29 has its own)."""
+
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 

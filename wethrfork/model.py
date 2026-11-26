@@ -3,6 +3,7 @@
 Reach budget per step (cells, Chebyshev): displacement cap 4 + bilinear 1 + three 3x3 convs 3 = 8.
 Nothing in here looks at the whole map: no normalisation over space, no pooling, no attention, no FFT, no dilation.
 """
+
 from __future__ import annotations
 
 import math
@@ -15,6 +16,7 @@ import torch.nn.functional as F
 
 from .normalize import from_z, to_z
 from .physics import (
+    CELL_NS_M,
     DAY_S,
     DISP_CAP_CELLS,
     LAT,
@@ -26,7 +28,6 @@ from .physics import (
     U10,
     V10,
     cell_size_ew_m,
-    CELL_NS_M,
 )
 
 N_INPUT = NC * T_IN + NC + 2 + 2 + 2  # 18 window + 6 mean + 2 static + 2 position + 2 season = 30
@@ -96,9 +97,7 @@ class SpeedLimitNet(nn.Module):
     def alpha(self) -> torch.Tensor:
         return torch.sigmoid(self.theta)
 
-    def build_inputs(
-        self, window: torch.Tensor, static: torch.Tensor, season: torch.Tensor
-    ) -> torch.Tensor:
+    def build_inputs(self, window: torch.Tensor, static: torch.Tensor, season: torch.Tensor) -> torch.Tensor:
         """window [B,3,6,H,W] normalised anomalies (oldest first), static [2,H,W], season [B,2] -> [B,30,H,W]."""
         b = window.shape[0]
         flat = window.reshape(b, T_IN * NC, NLAT, NLON)
@@ -180,9 +179,7 @@ def rollout_physical(
     steps: int,
 ) -> torch.Tensor:
     """Physical in, physical out. init_states [B,3,6,H,W]; returns [B,steps,6,H,W] (unclamped)."""
-    b = init_states.shape[0]
-    clim_in = clim[slots[:, :1].expand(b, T_IN)]  # last-day clim approximates earlier days' clim for anomalies
-    # earlier days use their own slots: slots of days -2,-1,0
+    # each input day is an anomaly relative to its own calendar slot: days -2, -1, 0
     prev = torch.stack([(slots[:, 0] - 2) % 366, (slots[:, 0] - 1) % 366, slots[:, 0]], dim=1)
     clim_in = clim[prev]
     z0 = to_z(init_states, clim_in, s)

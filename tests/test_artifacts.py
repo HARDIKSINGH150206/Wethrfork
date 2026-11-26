@@ -1,4 +1,5 @@
 """Committed artifacts: no multi-year archives and (when a manifest exists) matching hashes."""
+
 from __future__ import annotations
 
 import hashlib

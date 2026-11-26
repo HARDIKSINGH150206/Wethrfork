@@ -1,4 +1,5 @@
 """Fit the ridge skill head: closed-form per (lead, channel, cell), lambda chosen on the calibration split."""
+
 from __future__ import annotations
 
 import argparse
@@ -10,7 +11,7 @@ import torch
 
 from training.data import ROOT, load_archive, load_config, sample_starts, split_bounds
 from wethrfork.normalize import to_z
-from wethrfork.physics import MAX_STEPS, NC, NLAT, NLON, T_IN
+from wethrfork.physics import MAX_STEPS, NC, NLAT, NLON
 from wethrfork.ridge import N_FEAT, design_features
 
 log = logging.getLogger(__name__)

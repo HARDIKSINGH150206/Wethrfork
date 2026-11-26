@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
-
 from wethrfork.climatology import doy_from_sincos, sincos_of_slot, slot_of_doy, slots_for_steps
 
 

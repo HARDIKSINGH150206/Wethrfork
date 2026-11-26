@@ -1,4 +1,5 @@
 """Wire-format helpers: tolerant decoding of nested lists or base64 float32 arrays."""
+
 from __future__ import annotations
 
 import base64

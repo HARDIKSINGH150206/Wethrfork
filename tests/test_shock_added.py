@@ -1,4 +1,5 @@
 """With the network replaced by identity, the delta equals the perturbation exactly (up to float error)."""
+
 from __future__ import annotations
 
 import numpy as np
