@@ -116,8 +116,17 @@ def main() -> None:
         log.info(
             "lead %d: shrink %.2f floor %.1f scale %.2f points-proxy %.2f", k + 1, best[0], best[1], best[2], best_j
         )
-    sm = np.convolve(np.pad(scale, 1, mode="edge"), np.ones(3) / 3, mode="valid")
-    pp.update({"damp": damp.tolist(), "rain_scale": sm.tolist(), "rain_scale_above": 5.0})
+    # Save exactly the triple that was tuned (shrink, floor, scale per lead). Smoothing the scale afterwards would make the
+    # shipped calibration differ from the one the objective selected.
+    pp.update(
+        {
+            "damp": damp.tolist(),
+            "rain_shrink": [round(float(x), 4) for x in shrink],
+            "rain_floor": [round(float(x), 4) for x in floor],
+            "rain_scale": [round(float(x), 4) for x in scale],
+            "rain_scale_above": 5.0,
+        }
+    )
     path.write_text(json.dumps(pp))
     log.info("wrote %s", path)
 

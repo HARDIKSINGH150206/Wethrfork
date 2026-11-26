@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from lab.windows_store import WindowsStore
+from training.data import load_config
 from wethrfork.engine import Engine
 from wethrfork.physics import CHANNELS, UNITS
 
@@ -30,6 +31,35 @@ MEAN = np.array(KIT_STATS["mean"], dtype=np.float32)
 def _json_file(rel: str) -> dict:
     p = ROOT / rel
     return json.loads(p.read_text()) if p.exists() else {"available": False}
+
+
+DATA_PATH = ROOT / load_config(ROOT / "configs" / "data.yaml")["data_path"]
+
+
+def _shown(p: Path) -> str:
+    """Path for messages: repo-relative when inside the repo, absolute otherwise (never raises)."""
+    try:
+        return str(p.relative_to(ROOT))
+    except ValueError:
+        return str(p)
+
+
+def _no_data() -> dict:
+    return {
+        "error": "start states unavailable: the local dataset is missing",
+        "detail": f"copy india_climate_train.nc to {_shown(DATA_PATH)} (it is never committed), then restart the lab server",
+    }
+
+
+@app.get("/status")
+def status() -> dict:
+    return {
+        "engine_ready": ENGINE.ready,
+        "engine_error": ENGINE.error,
+        "model_name": ENGINE.model_name,
+        "data_present": DATA_PATH.exists(),
+        "data_path": _shown(DATA_PATH),
+    }
 
 
 @app.get("/meta")
@@ -53,11 +83,15 @@ def meta() -> dict:
 
 @app.get("/windows")
 def windows() -> list[dict]:
+    if not DATA_PATH.exists():
+        raise HTTPException(503, _no_data())
     return STORE.listing()
 
 
 @app.get("/windows/{wid}")
 def window(wid: str) -> dict:
+    if not DATA_PATH.exists():
+        raise HTTPException(503, _no_data())
     w = STORE.get(wid)
     if w is None:
         raise HTTPException(404, {"error": "unknown window"})

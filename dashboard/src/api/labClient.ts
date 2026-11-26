@@ -6,7 +6,11 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const timer = setTimeout(() => ctl.abort(), LAB_TIMEOUT_MS)
   try {
     const r = await fetch(LAB_URL + path, { ...init, signal: ctl.signal })
-    if (!r.ok) throw new Error(`lab ${path} answered ${r.status}`)
+    if (!r.ok) {
+      let msg = `lab ${path} answered ${r.status}`
+      try { const j = await r.json(); const d = j.detail ?? j; if (d?.error) msg = `${d.error}. ${d.detail ?? ''}` } catch { /* keep the generic message */ }
+      throw new Error(msg)
+    }
     return (await r.json()) as T
   } finally {
     clearTimeout(timer)

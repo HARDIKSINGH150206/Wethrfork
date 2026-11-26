@@ -32,7 +32,7 @@ No starter model or weights are given. The kit's placeholder server repeats the 
 
 | User | Job | What Wethrfork gives them |
 | --- | --- | --- |
-| Automated judge (Stage 1) | Score skill, dynamics, repo integrity | A server that passes every check by construction, verified with the judge's own code |
+| Automated judge (Stage 1) | Score skill, dynamics, repo integrity | A server designed to pass the judge's checks, verified by running the judge's own code on every held-out window |
 | Desk-review judge (Stage 2) | Apply a new shock live, probe design and limits | A shock composer, a fork view, and a live limits verdict that runs the official causality checks on their shock |
 | Finals panel (Round 3) | Decide which twin is most credible and useful | A clear identity (speed limit), scientific validation (natural experiment), honest limits (fuzz heatmap), an impact story |
 | State disaster officer (impact persona) | "Which regions, what risk, by when?" | An impact card showing how a shock shifts the probability of heavy rain and heatwave temperatures by region and lead day |
@@ -46,7 +46,7 @@ No starter model or weights are given. The kit's placeholder server repeats the 
 - G2. Score as close to 85 of the 85 automated points as possible (45 skill, 25 dynamics, 15 repo), and earn a strong
   brief score (15).
 - G3. Win the live desk review: any judge shock answered in under 3 seconds, with a self-audit on screen.
-- G4. Present a finals story no other team can tell: provable causality, natural-experiment validation, measured limits.
+- G4. Present a finals story no other team can tell: a tested locality bound, natural-experiment validation, measured limits.
 
 ### Non-goals
 - Global or high-resolution forecasting. The grid is fixed at 1 degree over India.

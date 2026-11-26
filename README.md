@@ -2,7 +2,7 @@
 
 > **A weather model with a speed limit.**
 > A physics-aware Climate Digital Twin of India that rolls the monsoon forward day by day, forks it into alternate
-> universes when you shock it, and can prove that no shock travels faster than the atmosphere could carry it.
+> universes when you shock it, with a locality bound that is tested on the code and a live audit of every shock.
 
 Wethrfork is our entry for **Yugaantar DevForge, Track 2: "Multiverse of Monsoon"**. This repository holds:
 
@@ -29,8 +29,8 @@ If you are an AI coding agent (Claude Code, Codex or any other), read **`AGENTS.
 | What are the channels? | t2m (K), tp (mm/day), u10 (m/s), v10 (m/s), msl (Pa), tcwv (kg/m2), always in that order |
 | What is the model? | A **skill head** (per-cell ridge regression + neural network, blended and calibrated) for the forecast, and a **dynamics head** (the neural network alone) for the shock response |
 | What is the neural network? | Residual-on-last-day: bounded semi-Lagrangian advection (displacement capped at 4 cells/day) + a local 3x3 CNN (reach 3 cells). Total influence is at most 8 cells (about 900 km) per day |
-| Why that design? | The automated judge rewards shocks that stay local on day 1 and spread outward at a bounded speed. Our architecture guarantees it |
-| What makes it stand out? | A provable speed limit, a live "limits verdict" panel that runs the official causality checks on any shock a judge applies, natural-experiment validation, and a shock fuzz test |
+| Why that design? | The automated judge rewards shocks that stay local on day 1 and spread outward at a bounded speed. Each daily update of the shock-response network is bounded to 8 cells along either axis (about 9.7 diagonally); unit tests check the bound and the judge's own checks pass on every held-out window we tried |
+| What makes it stand out? | A bounded, tested locality limit (not a claim of correct physics), a live "limits verdict" panel that runs the official causality checks on any shock a judge applies, natural-experiment validation, and a shock fuzz test |
 | Team | 3 people, 12 hours, one RTX 4050 laptop GPU (6 GB) for training |
 
 ---
@@ -39,8 +39,8 @@ If you are an AI coding agent (Claude Code, Codex or any other), read **`AGENTS.
 
 | Metric | Value |
 | --- | --- |
-| Mean RMSE skill vs best of persistence/climatology | 0.134 (full marks at 0.12) |
-| Heavy-rain CSI skill | 0.075 |
+| Mean RMSE skill vs best of persistence/climatology | 0.135 (full marks at 0.12) |
+| Heavy-rain CSI skill | 0.073 |
 | Day-8 variance ratio (min over channels) | 0.68 |
 | Causality gate (4 seasons x 2 official shocks) | pass, strict thresholds; null shock differs by exactly 0.0 |
 | Fuzz test (60 shocks) | 100% valid, 95% causal |

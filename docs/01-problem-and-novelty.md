@@ -71,12 +71,12 @@ is final judging before the official panel.
 ### 3.1 The headline: "a weather model with a speed limit"
 Most data-driven weather models can move information anywhere in one step. Ours cannot. Each simulated day, a change
 can travel at most 8 grid cells (about 900 km): 4 cells of bounded advection along the learned flow, plus 4 cells of
-local mixing (bilinear sampling and three 3x3 convolutions). We prove it with a light-cone unit test that perturbs a
+local mixing (bilinear sampling and three 3x3 convolutions). We check it with a light-cone unit test that perturbs a
 single cell and measures, with the judge's own distance metric, where the gradient becomes nonzero.
 
 Why it matters:
 - **For scoring**: the automated causality checks (localized on day 1, outward spread by days 4-8, nothing beyond
-  `3 + 8(k+1)` cells) pass by construction rather than by luck.
+  `3 + 8(k+1)` cells) are designed to pass, and we check that on every held-out window rather than assuming it.
 - **For trust**: a planner using the twin needs to know a forecast change in Delhi was not caused by a numerical
   artefact in the Bay of Bengal. Our model can say "this could only have come from within 900 km per day of here".
 - **For the story**: one sentence that a judge remembers.

@@ -22,7 +22,7 @@ questions on scoring and engineering (P2).
 | Time | Screen | Words (narrator) | Fallback |
 | --- | --- | --- | --- |
 | 0:00 | Dashboard home | "This is Wethrfork, a monsoon digital twin of India. Before anything, I'm turning off Wi-Fi." (turn it off; 10 seconds max) | If Wi-Fi toggle is awkward, skip and say "everything runs locally; happy to prove it later" |
-| 0:15 | Home | "Our one idea: a weather model with a speed limit. No change in our simulation can travel more than about 900 km a day, and we can prove it. That is what makes our alternate universes trustworthy." | |
+| 0:15 | Home | "Our one idea: a weather model with a speed limit. The network cannot move a change more than about 900 km a day, and our tests check that. That bound keeps the alternate universes local and honest; what they show is the model's learned response, and we say where it is weak." | |
 | 0:40 | Timeline Prime: a held-out window, model next to reality, scrub day 1 to 10 | "Here's a 10-day forecast from a window the model never saw, next to what really happened. Notice day 8 is still sharp, not a grey average. On held-out data we beat both 'repeat yesterday' and climatology by X%." | If truth is missing (data file absent), show the forecast only |
 | 1:30 | Shock composer | "Now the multiverse. Would you like to pick the shock?" Hand the mouse to the judge. If they hesitate, offer the warm Bay of Bengal preset. | Preset button "Warm Bay +3 K" |
 | 1:50 | Fork view: base, shocked, delta; speed-limit ring | "The universe forks. Left is the control, middle is the shocked world, right is the difference. The ring is our speed limit: the ripple cannot leave it. Dotted cells are where the change is bigger than our own measured forecast error." | If the fork is slow (> 3 s), narrate the ring while it loads |
@@ -55,5 +55,5 @@ questions on scoring and engineering (P2).
 ## 5. Finals version (Round 3, panel)
 Same flow, tighter (4 minutes), plus one slide-like full-screen view of the speed-limit contract table from the brief,
 and the out-of-sample numbers. Opening line:
-"Every AI weather model can tell you tomorrow's rain. Ours can prove its answer obeys the speed of weather: a shock in
+"Every AI weather model can tell you tomorrow's rain. Ours can show its answer obeys a speed limit that we test: a shock in
 the Bay of Bengal cannot reach Delhi faster than the atmosphere can carry it."

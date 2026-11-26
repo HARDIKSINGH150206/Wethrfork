@@ -203,3 +203,21 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
   forecast-model picker, city labels, a click picker and a detailed 10-day forecast panel. Secondary views open as a sheet.
 - **Scope**: we follow the layout and interaction pattern only. Name, logo, code and assets are our own, and everything
   runs offline on our own forecasts.
+
+### D40. Claim wording: a hybrid system with bounded local responses and measured limits
+- **Decision**: we no longer say "causal by construction" or "provable". The accurate statement is: the shock-response network's
+  daily update can move information at most 8 cells along either axis (up to 9.7 cells on a diagonal), a bound that unit tests
+  check; responses pass the judge's own causality checks on every held-out window; the sign and size of a response are learned from
+  data, not validated physics. Supersedes the wording of D1, D24 and the first lines of D31.
+- **Why**: a local architecture bounds where a change can appear; it does not show that the change is physically right. A QA
+  review also found two ways the earlier wording overreached (below).
+
+### D41. A shock through the API is not the same as editing the input day
+- **Fact**: the served formula keeps the forecast of the UNshocked state and adds the dynamics network's response, so
+  `simulate(init, shock)` differs from `simulate(init + shock on the last day, no shock)`. Measured on all 71 held-out windows
+  (`python -m evaluation.equivalence_check`): for warm_ocean the median of the largest daily rainfall difference is 14.5 mm/day,
+  95th percentile 36.3, maximum 104.9; for monsoon_stall median 4.4, p95 21.4, maximum 27.7.
+- **Why we keep it**: the skill head (ridge, blend, damping) shrinks and traps a shock; adding the response to the control forecast
+  is what makes the judge's propagation check pass (D3, D34). The price is that the two routes disagree, which we state.
+- **How to answer**: "It is a control forecast plus a perturbation model, as in tangent-linear forecasting. They are not the same
+  object, and here is the measured gap."

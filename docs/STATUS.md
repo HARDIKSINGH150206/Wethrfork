@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Current phase | Hardening done; submission candidate |
+| Current phase | QA remediation and brutal audit done; submission candidate (see `docs/AUDIT.md`) |
 | Current tag | v1.1 (after this round of testing) |
 | Model | `wethrfork-v1.1-speedlimit`: skill network + ridge (forecast), fine-tuned dynamics network (shock response) |
 
@@ -20,10 +20,10 @@
 ## Self-grade, 2021 (network and ridge never saw 2021)
 | Metric | Day 1 | Day 4 | Day 8 | Mean / points |
 | --- | --- | --- | --- | --- |
-| RMSE skill vs best of persistence/climatology (calibration fitted on 2020) | 0.222 | 0.036 | -0.009 | 0.134 (30 / 30) |
-| CSI skill at 10 mm/day | 0.092 | 0.019 | -0.013 | 0.075 (11.3 / 15) |
+| RMSE skill vs best of persistence/climatology (calibration fitted on 2020) | 0.223 | 0.038 | -0.009 | 0.135 (30 / 30) |
+| CSI skill at 10 mm/day | 0.087 | 0.016 | -0.011 | 0.073 (11.0 / 15) |
 | Day-4 skill vs persistence, by channel (t2m, tp, u10, v10, msl, tcwv) | | 0.22, 0.26, 0.26, 0.30, 0.23, 0.24 | | beats persistence on every channel |
-| Day-8 variance ratio (t2m, tp, u10, v10, msl, tcwv) | | | 1.01, 0.68, 0.71, 0.78, 0.85, 0.91 | anti-blur 10 / 10 |
+| Day-8 variance ratio (t2m, tp, u10, v10, msl, tcwv) | | | 1.01, 0.68, 0.71, 0.78, 0.85, 0.90 | anti-blur 10 / 10 |
 
 Leakage check: the climatology and normalisation statistics are computed over 2005-2021 (like the judge's reference).
 Rebuilding the climatology from 2005-2020 only and re-grading 2021 changes mean skill 0.1335 to 0.1326 and CSI skill
@@ -42,7 +42,7 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 ## Engineering
 | Check | Value |
 | --- | --- |
-| Tests | 78 pass (includes 40 HTTP edge cases: malformed bodies, wrong shapes, NaN/Inf, 1e30 values, odd steps, Feb 29 / Dec 31) |
+| Tests | 101 pytest (includes 40 HTTP edge cases) + 16 dashboard unit tests; full audit in `docs/AUDIT.md` |
 | Malformed requests | clean 400/422 JSON errors (were 500 before this round) |
 | Latency, 10 steps shocked | about 0.18 s wall with JSON; 8 concurrent shocked calls all succeed |
 | Fuzz | 200 random shocks: validity 100%, causality 99.5% (rain shocks 94%, 40%-relative shocks 96% are the weakest) |
@@ -56,4 +56,6 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 | 1 | Pressure response does not match the natural-experiment composite | stated as a limit |
 | 2 | Day-8 skill is about climatology | by design |
 | 3 | Stall rain response about 2x observed after the dynamics fine-tune (was 1.4x); previous weights kept outside the repo for a revert | stated as a limit; Q&A 20 |
-| 4 | Dashboard tested at 1500-1600 px wide; smaller screens only lightly handled | check on the demo laptop |
+| 4 | Not rehearsed on the presentation laptop; run `make preflight` and `make demo` there | open |
+| 5 | 10 of 4,138 shocked forecasts over the whole archive (0.24%) narrowly fail the judge's propagation check | stated residual risk |
+| 6 | An API shock differs from an edited input day (median 14.5 mm/day rain, up to 105) | by design (D41), stated |
