@@ -30,7 +30,7 @@ const T = (cc: number): number => cc + 273.15
 export const LAYERS: Record<LayerId, LayerDef> = {
   wind: {
     id: 'wind', label: 'Wind', lo: 0, hi: 30, warp: 'lin', deltaFloor: 1,
-    stops: [[0, c(40, 70, 160, 0.35)], [2, c(52, 118, 200, 0.55)], [5, c(66, 176, 170, 0.7)], [8, c(110, 205, 110, 0.78)], [12, c(240, 226, 80, 0.85)], [17, c(246, 150, 52, 0.9)], [23, c(220, 52, 44, 0.92)], [30, c(150, 20, 80, 0.95)]],
+    stops: [[0, c(46, 84, 190, 0.5)], [2, c(56, 128, 215, 0.66)], [5, c(62, 190, 176, 0.76)], [8, c(110, 205, 110, 0.78)], [12, c(240, 226, 80, 0.85)], [17, c(246, 150, 52, 0.9)], [23, c(220, 52, 44, 0.92)], [30, c(150, 20, 80, 0.95)]],
     ticks: [0, 3, 6, 10, 15, 20, 30],
     fmt: (v, u) => `${windOf(v, u.wind).toFixed(1)} ${windLabel(u.wind)}`, unit: (u) => windLabel(u.wind), disp: (v, u) => windOf(v, u.wind),
   },
@@ -79,7 +79,8 @@ function interpStops(stops: Stop[], x: number): RGBA {
 
 /** Colour lookup for a layer (absolute values). Index with `lutIndex`. */
 export function lut(layer: LayerDef): Uint8ClampedArray {
-  let l = lutCache.get(layer.id)
+  const key = `${layer.id}|${layer.label}|${layer.lo}|${layer.hi}`
+  let l = lutCache.get(key)
   if (l) return l
   l = new Uint8ClampedArray(N * 4)
   for (let k = 0; k < N; k++) {
@@ -88,7 +89,7 @@ export function lut(layer: LayerDef): Uint8ClampedArray {
     const [r, g, b, a] = interpStops(layer.stops, x)
     l[k * 4] = r; l[k * 4 + 1] = g; l[k * 4 + 2] = b; l[k * 4 + 3] = a * 255
   }
-  lutCache.set(layer.id, l)
+  lutCache.set(key, l)
   return l
 }
 export function lutIndex(layer: LayerDef, v: number): number {

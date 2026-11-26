@@ -74,7 +74,7 @@ export const useStore = create<Store>((set, get) => ({
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
   showRings: true, showIsobars: true, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
-  drawer: 'shock', sens: null, sensBusy: false,
+  drawer: null, sens: null, sensBusy: false,
 
   set: (p) => set(p),
   setUnits: (u) => set((s) => ({ units: { ...s.units, ...u } })),

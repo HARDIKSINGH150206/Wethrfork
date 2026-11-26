@@ -72,12 +72,18 @@ export function MapStage() {
     cv.width = size.w * dpr; cv.height = size.h * dpr
     const g = cv.getContext('2d')!
     g.setTransform(dpr, 0, 0, dpr, 0, 0)
-    g.fillStyle = '#08111d'
+    g.fillStyle = '#060d17'
     g.fillRect(0, 0, size.w, size.h)
+    g.fillStyle = 'rgba(120,160,210,0.10)'
+    for (let gx = (projX(view, LON_MIN) % 24) - 24; gx < size.w; gx += 24) for (let gy = (projY(view, LAT_MAX) % 24) - 24; gy < size.h; gy += 24) g.fillRect(gx, gy, 1.5, 1.5)
     const x0 = projX(view, LON_MIN), y0 = projY(view, LAT_MAX)
     const W = (LON_MAX - LON_MIN) * view.scale, H = (LAT_MAX - LAT_MIN) * view.scale
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'
+    g.save(); g.shadowColor = 'rgba(76,194,255,0.35)'; g.shadowBlur = 24; g.fillStyle = '#0a1524'; g.fillRect(x0, y0, W, H); g.restore()
     g.drawImage(base, x0, y0, W, H)
+    g.strokeStyle = 'rgba(76,194,255,0.45)'; g.lineWidth = 1.2; g.strokeRect(x0, y0, W, H)
+    g.font = '600 9.5px system-ui'; g.fillStyle = 'rgba(143,164,187,0.8)'
+    g.fillText('MODEL DOMAIN · 6–38°N · 65–101°E · 1° GRID', x0 + 8, y0 - 6)
 
     const def = LAYERS[layer]
     const aField = uni ? scalarAt(uni, tf, layer) : null
@@ -135,12 +141,12 @@ export function MapStage() {
       if (key !== isoKey.current) {
         isoKey.current = key
         const levels: number[] = []
-        for (let p = 98000; p <= 103600; p += 200) levels.push(p)
+        for (let p = 98000; p <= 103600; p += 400) levels.push(p)
         isoCache.current = contourLines(scalarAt(uni, tf, 'pressure'), levels)
       }
       g.lineWidth = 1; g.strokeStyle = 'rgba(255,255,255,0.5)'; g.fillStyle = 'rgba(255,255,255,0.95)'; g.font = '600 10px system-ui'
       for (const c of isoCache.current) {
-        const major = Math.round(c.level / 100) % 4 === 0
+        const major = Math.round(c.level / 100) % 8 === 0
         g.lineWidth = major ? 1.3 : 0.7
         for (const ln of c.lines) {
           if (ln.length < 4) continue
