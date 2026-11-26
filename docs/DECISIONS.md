@@ -244,3 +244,20 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 - **Checks**: 16 dashboard unit tests, `npm run build`, a 13-step browser drive (layers, fork, difference, swipe, point
   forecast, search, settings, info, timeline, collapsed menu, phone and 1280 x 720 viewports) with no console errors,
   preflight 20 / 20 live checks including "no external hosts".
+
+### D43. Strict automated testing built on the organisers' own code
+- **Decision**: three testing layers (see `docs/10-testing-and-ci.md` section 7): judge-contract tests in CI
+  (`tests/test_judge_contract.py`), a judge rehearsal in a judge-like container (`evaluation/judge_rehearsal.py`,
+  `make rehearsal`) and one release command (`evaluation/release_check.py`, `make release-check`). All calls go
+  through the kit's client and validator and are scored with `monsoon_r1.scoring`; we add margins
+  (`configs/rehearsal.yaml`): ready within 30 s (judge 120), every call within 1.5 s (judge 5), peak memory 3 GB
+  (judge 6), null shock bit for bit (judge 1e-3 std), 15 / 15 causality on every shock window (the judge uses one),
+  day-4 persistence beaten on every channel (the judge's hard gate), full RMSE points.
+- **Why**: before this, `selfgrade` and `fuzz_gym` printed numbers but could not fail, and `make judge` started a
+  container without calling it. The judge's environment (no kit, no network, read-only, Python 3.11) was never tested
+  together with the judge's client.
+- **Evidence the gates bite**: five broken copies of the server (kit import, write into the repo, noise, 2 s delay,
+  negative rain) all fail the rehearsal; the contract tests reject the four that break the contract.
+- **Scope**: no change to the server, the model, the scoring reproduction or any threshold of the existing causality
+  gate. The rehearsal sends the day of year as the kit's `doy_sincos` of the calendar day (counted from 1) and checks
+  that counting from 0 changes skill by at most 0.01 (measured: 0.003).

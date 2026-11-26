@@ -49,6 +49,8 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 | Natural experiment (60 warm, moist Bay days, day 2) | rain pattern r = 0.31 (same sign in the Bay); pressure r = -0.07 (no match) |
 | Monsoon-stall rain | same break-then-revival sequence as the data; dynamics network about 2x the observed size by day 8 |
 | Repo scan | 15.0 / 15 |
+| Strict testing (D43) | `make release-check`: PASS in 78 s (lint, 125 pytest, scan 15/15, preflight 13/13, gate, sweep 15/15 every season, fuzz 60/60, self-grade 0.134, rehearsal, dashboard tests and build) |
+| Judge rehearsal | 120 calls with the kit's client in a no-network, read-only, 4 CPU, 6 GB, Python 3.11 container without the kit: ready 4.5 s, slowest call 0.29 s, peak memory 0.44 GB, causality 15/15 on all 10 shock windows, null bit for bit, day-4 beats persistence on every channel, container equals dev engine (drift 0.0), day-of-year convention changes skill by 0.003 |
 | Dashboard (D42) | satellite-map layout: bundled NASA Blue Marble base map and Natural Earth borders (India's view), frosted panels, round tools, timeline capsule; build, 16 vitest, 13-step browser drive with 0 console errors, preflight 20 / 20 |
 
 ## Open issues
