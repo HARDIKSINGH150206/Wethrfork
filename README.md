@@ -39,8 +39,8 @@ If you are an AI coding agent (Claude Code, Codex or any other), read **`AGENTS.
 
 | Metric | Value |
 | --- | --- |
-| Mean RMSE skill vs best of persistence/climatology | 0.134 (full marks at 0.12) |
-| Heavy-rain CSI skill | 0.075 |
+| Mean RMSE skill vs best of persistence/climatology | 0.135 (full marks at 0.12) |
+| Heavy-rain CSI skill | 0.073 |
 | Day-8 variance ratio (min over channels) | 0.68 |
 | Causality gate (4 seasons x 2 official shocks) | pass, strict thresholds; null shock differs by exactly 0.0 |
 | Fuzz test (60 shocks) | 100% valid, 95% causal |
