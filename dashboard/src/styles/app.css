@@ -11,7 +11,8 @@ button.primary { background:var(--acc); color:#04121c; font-weight:600; width:10
 .badge { font-size:11px; padding:3px 8px; border-radius:99px; border:1px solid var(--line); color:var(--dim); } .badge.on { color:var(--ok); border-color:var(--ok); } .badge.off { color:var(--bad); border-color:var(--bad); }
 .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; } .panel h3 { margin:0 0 8px; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; } h4 { margin:12px 0 0; font-size:12px; color:var(--dim); }
 .presets { display:flex; flex-wrap:wrap; gap:6px; }
-.maps { display:flex; gap:10px; flex-wrap:wrap; } .map { margin:0; } .map figcaption { font-size:12px; color:var(--dim); margin-bottom:4px; } .map canvas { width:360px; max-width:100%; border:1px solid var(--line); border-radius:6px; } .hover { font-size:11px; color:var(--dim); height:14px; }
+.maps { display:flex; gap:10px; flex-wrap:wrap; }
+@media (min-width: 1100px) { .maps { flex-wrap:nowrap; } .map { flex:1 1 0; min-width:0; } } .map { margin:0; } .map figcaption { font-size:12px; color:var(--dim); margin-bottom:4px; } .map canvas { width:100%; max-width:380px; border:1px solid var(--line); border-radius:6px; } .hover { font-size:11px; color:var(--dim); height:14px; }
 .scrub { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:12px; } .scrub input { flex:1; max-width:380px; }
 .legend i { display:inline-block; width:18px; border-top:2px dashed; margin:0 4px 0 12px; vertical-align:middle; }
 .row { display:grid; grid-template-columns: 300px 1fr; gap:12px; } .verdict ul { list-style:none; padding:0; margin:0 0 8px; font-size:13px; } .ok { color:var(--ok); } .bad { color:var(--bad); } .muted { opacity:.6; }
