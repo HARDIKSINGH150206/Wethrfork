@@ -60,6 +60,7 @@ interface Store {
   sens: Sens | null
   sensBusy: boolean
   menuOpen: boolean
+  startError: string | null
   meteo: boolean
   focus: Focus | null
   boot: () => Promise<void>
@@ -79,19 +80,26 @@ export const useStore = create<Store>((set, get) => ({
   universes: {}, order: [], selected: CONTROL, labOnline: false, judgeOnline: false,
   tab: 'map', tf: 0, playing: false, speed: 1, layer: 'wind', units: DEFAULT_UNITS, delta: false, compare: false, compareX: 0.5,
   showRings: true, showIsobars: false, showParticles: true, showStipple: false, pin: null, drawMode: false, drawnBox: null,
-  drawer: null, sens: null, sensBusy: false, menuOpen: false, meteo: false, focus: null,
+  drawer: null, sens: null, sensBusy: false, menuOpen: false, startError: null, meteo: false, focus: null,
 
   set: (p) => set(p),
   setUnits: (u) => set((s) => ({ units: { ...s.units, ...u } })),
 
   boot: async () => {
-    set({ judgeOnline: await health() })
+    set({ judgeOnline: await health(), startError: null })
     try {
-      const [meta, windows] = await Promise.all([getMeta(), getWindows()])
-      set({ meta, windows, labOnline: true })
-      if (windows.length) await get().selectWindow(windows[0].id)
-    } catch {
-      set({ labOnline: false })
+      set({ meta: await getMeta(), labOnline: true })
+    } catch (e) {
+      set({ labOnline: false, startError: `The lab server is not reachable. Start it with: make demo  (${String(e).replace('Error: ', '')})` })
+      return
+    }
+    try {
+      const windows = await getWindows()
+      set({ windows })
+      if (!windows.length) { set({ startError: 'No start states are configured (configs/demo.yaml).' }); return }
+      await get().selectWindow(windows[0].id)
+    } catch (e) {
+      set({ startError: String(e).replace('Error: ', '') })
     }
   },
 

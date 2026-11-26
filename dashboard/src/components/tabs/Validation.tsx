@@ -55,7 +55,7 @@ function LightCone() {
   return (
     <section className="card wide">
       <h3>Live light-cone test</h3>
-      <p className="dim">Fire a +4 K pulse into a single cell through the real server and measure how far the response travels each day. The model cannot move a change more than 8 cells (about 900 km) per day.</p>
+      <p className="dim">Fire a +4 K pulse into a single cell through the real server and measure how far the response travels each day. The network's update is bounded to 8 cells along either axis (about 900 km) per day; the chart measures the farthest cell, in max-axis distance, that changes.</p>
       <div className="form row">
         <label>Latitude<input type="number" value={lat} step={1} onChange={(e) => setLat(+e.target.value)} /></label>
         <label>Longitude<input type="number" value={lon} step={1} onChange={(e) => setLon(+e.target.value)} /></label>

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { CHANNELS, UNITS } from '../../api/types'
-import { CELLS, NLAT, NLON, chIndex, latOf, lonOf } from '../../lib/grid'
+import { CELLS, chIndex } from '../../lib/grid'
+import { dayName } from '../../lib/dates'
+import { rainfallExposure, windowStart } from '../../lib/exposure'
 import { REGIONS } from '../../lib/regions'
 import { boxShock, cyclone, dryKerala, heatDome, monsoonStall, warmOcean } from '../../lib/shocks'
 import { IconBolt, IconShield } from '../icons'
@@ -54,29 +56,24 @@ function ShockPanel() {
   )
 }
 
-function regionMean(roll: Float32Array, d: number, c: number, box: [number, number, number, number], land: number[][] | null): number {
-  let s = 0, n = 0
-  const off = (d * 6 + c) * CELLS
-  for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) {
-    if (latOf(i) < box[0] || latOf(i) > box[1] || lonOf(j) < box[2] || lonOf(j) > box[3]) continue
-    if (land && land[i][j] < 0.5) continue
-    s += roll[off + i * NLON + j]; n++
-  }
-  return n ? s / n : NaN
-}
-
 function AuditPanel() {
-  const { universes, selected, labOnline, tf, meta } = useStore()
+  const { universes, selected, labOnline, tf, meta, doy, weekday } = useStore()
+  const [thr, setThr] = useState(50)
   const u = universes[selected], ctl = universes[CONTROL]?.rollout
   if (selected === CONTROL || !u?.rollout || !ctl) return <p className="hint">Fork a universe to audit it: the official causality checks run live on every shock.</p>
   const v = u.verdict
-  const d = Math.min(Math.round(tf), 9)
-  const rows = REGIONS.map((r) => ({
-    name: r.name,
-    dT: regionMean(u.rollout!, d, 0, r.box, meta?.land_sea_mask ?? null) - regionMean(ctl, d, 0, r.box, meta?.land_sea_mask ?? null),
-    c: regionMean(ctl, d, 1, r.box, meta?.land_sea_mask ?? null),
-    s: regionMean(u.rollout!, d, 1, r.box, meta?.land_sea_mask ?? null),
-  })).sort((a, b) => Math.abs(b.s - b.c) - Math.abs(a.s - a.c)).slice(0, 6)
+  const scn = u.rollout
+  const N_DAYS = 3
+  const start = windowStart(tf, N_DAYS)
+  const land = meta?.land_sea_mask ?? null
+  const rows = land ? [
+    { name: 'All land in the domain', ...rainfallExposure(ctl, scn, start, N_DAYS, thr, land, null) },
+    ...REGIONS.map((r) => ({ name: r.name, ...rainfallExposure(ctl, scn, start, N_DAYS, thr, land, r.box) })),
+  ] : []
+  const [total, ...regions] = rows
+  regions.sort((a, b) => Math.abs(b.scnFrac - b.ctlFrac) + Math.abs(b.scnMm - b.ctlMm) / 200 - (Math.abs(a.scnFrac - a.ctlFrac) + Math.abs(a.scnMm - a.ctlMm) / 200))
+  const pct = (x: number) => `${Math.round(x * 100)}%`
+  const dpp = (a: number, b: number) => { const d = Math.round((b - a) * 100); return `${d >= 0 ? '+' : ''}${d} pp` }
   const ood = v?.ood
   return (
     <>
@@ -96,11 +93,23 @@ function AuditPanel() {
           )}
         </>
       )}
-      <h4>Regional impact · day +{d + 1}</h4>
-      <table className="impact"><tbody>
-        {rows.map((r) => <tr key={r.name}><td>{r.name}</td><td>{r.c.toFixed(1)}→<b>{r.s.toFixed(1)}</b> <small>mm/d</small></td><td>{r.dT >= 0 ? '+' : ''}{r.dT.toFixed(2)} <small>K</small></td></tr>)}
-      </tbody></table>
-      <p className="hint">Mean over land cells of 1° (~110 km). The model&rsquo;s own response, not a verified forecast.</p>
+      <h4>Rainfall exposure</h4>
+      <div className="expo-head">
+        <span>3-day accumulation, <b>{dayName(doy, start + 1, weekday, true)} to {dayName(doy, start + N_DAYS, weekday, true)}</b></span>
+        <div className="thr" title="Declared threshold: accumulated rainfall over the 3 days">
+          {[25, 50, 100].map((x) => <button key={x} className={thr === x ? 'on' : ''} onClick={() => setThr(x)}>{x} mm</button>)}
+        </div>
+      </div>
+      <table className="impact expo">
+        <thead><tr><th>Region</th><th>3-day rain</th><th>Land above {thr} mm</th></tr></thead>
+        <tbody>
+          {total && <tr className="total"><td>{total.name}</td><td>{total.ctlMm.toFixed(0)}→<b>{total.scnMm.toFixed(0)}</b> <small>mm</small></td><td>{pct(total.ctlFrac)}→<b>{pct(total.scnFrac)}</b> <small className={total.scnFrac >= total.ctlFrac ? 'up' : 'down'}>{dpp(total.ctlFrac, total.scnFrac)}</small></td></tr>}
+          {regions.slice(0, 7).map((r) => (
+            <tr key={r.name}><td>{r.name}</td><td>{r.ctlMm.toFixed(0)}→<b>{r.scnMm.toFixed(0)}</b> <small>mm</small></td><td>{pct(r.ctlFrac)}→<b>{pct(r.scnFrac)}</b> <small className={r.scnFrac >= r.ctlFrac ? 'up' : 'down'}>{dpp(r.ctlFrac, r.scnFrac)}</small></td></tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="hint">Rainfall exposure only: accumulated model rainfall and the share of land <i>area</i> (latitude-weighted 1° land cells) above the threshold you choose, control against this scenario. It is not a flood probability or a crop-loss estimate. The scenario is the model&rsquo;s own response, not a verified forecast.</p>
     </>
   )
 }
