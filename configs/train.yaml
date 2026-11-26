@@ -19,12 +19,12 @@ loss:
   heavy_rain_weight: 3.0
 curriculum:
   - {unroll: 1, epochs: 15, input_noise: 0.0}
-  - {unroll: 4, epochs: 10, input_noise: 0.05}
-  - {unroll: 8, epochs: 8, input_noise: 0.05, shock_augment_prob: 0.2}
+  - {unroll: 4, epochs: 10, input_noise: 0.05, shock_reg: 0.2, rho_persist: 0.5, rho_far: 0.08}
+  - {unroll: 8, epochs: 10, input_noise: 0.05, shock_reg: 0.3, rho_persist: 0.5, rho_far: 0.08}
 select:
   metric: selfgrade_mean_ss_calib
   require_gate: true
-out_dir: runs/nn
+out_dir: runs/nn_v2
 # Checkpoint selection windows (calibration year, never the grading year): last input day per season.
 select_windows:
   systematic: {start: "2020-01-03", end: "2020-12-20", every_days: 6}

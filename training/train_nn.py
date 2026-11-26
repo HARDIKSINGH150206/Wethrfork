@@ -15,6 +15,7 @@ import torch
 
 from training.data import ROOT, load_archive, load_config, sample_starts, split_bounds
 from training.fit_ridge import build_z, load_norm_inputs
+from wethrfork.blend import limit_delta
 from wethrfork.model import NetConfig, SpeedLimitNet, rollout
 from wethrfork.normalize import from_z
 from wethrfork.physics import CHANNELS, NC, lat_weights
@@ -59,6 +60,52 @@ class Ctx:
         wt = wt.expand_as(pred).clone()
         wt[:, :, 1] = wt[:, :, 1] * (1.0 + (self.heavy_w - 1.0) * heavy.float())
         return (wt * (pred - tgt) ** 2).mean()
+
+
+def make_bump(nb: int, dev: torch.device, h: int = 32, w: int = 36) -> tuple[torch.Tensor, torch.Tensor]:
+    """Random localised bumps (gaussian or box) on one channel, in normalised units. Returns bump [nb,6,H,W], support [nb,H,W]."""
+    ii = torch.arange(h, device=dev).view(1, h, 1).float()
+    jj = torch.arange(w, device=dev).view(1, 1, w).float()
+    ci = torch.rand(nb, 1, 1, device=dev) * (h - 1)
+    cj = torch.rand(nb, 1, 1, device=dev) * (w - 1)
+    rad = 2 + 4 * torch.rand(nb, 1, 1, device=dev)
+    gauss = torch.exp(-((ii - ci) ** 2 + (jj - cj) ** 2) / (2 * rad**2))
+    half = 2 + 4 * torch.rand(nb, 1, 1, device=dev)
+    box = ((ii - ci).abs() <= half) & ((jj - cj).abs() <= half)
+    use_box = torch.rand(nb, 1, 1, device=dev) < 0.5
+    shape = torch.where(use_box, box.float(), gauss)
+    support = shape > 0.1
+    ch = torch.randint(0, NC, (nb,), device=dev)
+    amp = (1.0 + 2.0 * torch.rand(nb, device=dev)) * torch.where(torch.rand(nb, device=dev) < 0.5, -1.0, 1.0)
+    bump = torch.zeros(nb, NC, h, w, device=dev)
+    bump[torch.arange(nb), ch] = amp.view(nb, 1, 1) * shape
+    return bump, support
+
+
+def persistence_loss(resp: torch.Tensor, support: torch.Tensor, rho_p: float, rho_f: float) -> torch.Tensor:
+    """Shock-response regulariser. resp [nb,K,6,H,W] = shocked minus base rollout (normalised units).
+
+    The response energy at days 4..K must keep at least rho_p of its day-1 value, and at least rho_f of it must sit
+    outside the neighbourhood (3 cells) of the shock: anomalies persist and are carried outward, not erased in place.
+    """
+    k = resp.shape[1]
+    e = (resp**2).sum(dim=2)  # [nb,K,H,W]
+    near = torch.nn.functional.max_pool2d(support.unsqueeze(1).float(), 7, 1, 3) > 0  # [nb,1,H,W]
+    tot = e.sum(dim=(2, 3))
+    far = (e * (~near)).sum(dim=(2, 3))
+    k0 = min(3, k - 1)
+    e1 = tot[:, 0].detach() + 1e-3
+    late = tot[:, k0:].mean(dim=1)
+    far_late = far[:, k0:].mean(dim=1)
+    eps = 1e-4
+    lr = torch.log((late + eps) / e1).clamp(-3.0, 3.0)
+    lf = torch.log((far_late + eps) / e1).clamp(-3.0, 3.0)
+    # persistence floor, a ceiling at 2x so the regulariser can never reward an exploding response, and a far-field floor
+    return (
+        torch.relu(math.log(rho_p) - lr) ** 2
+        + torch.relu(lr - math.log(2.0)) ** 2
+        + torch.relu(math.log(rho_f) - lf) ** 2
+    ).mean()
 
 
 def _idx(arc, day: str) -> int:
@@ -113,8 +160,8 @@ def evaluate(model, ctx: Ctx, cfg: dict, kit_std: np.ndarray) -> dict:
             x2 = x.clone()
             x2[0, -1] = x2[0, -1] + pert
             out = predict_phys(model, ctx, torch.cat([x, x2]), sl.expand(2, -1), 10).cpu().numpy()
-            res = S.causality_checks(out[0], out[1], box, kit_std)
-            d = out[1] - out[0]
+            d = limit_delta((out[1] - out[0])[None], kit_std)[0]
+            res = S.causality_checks(out[0], out[0] + d, box, kit_std)
             e = S._energy(d, kit_std)
             near = S.near_mask(box)
             out_e = np.array([e[k][~near].sum() for k in range(10)])
@@ -123,6 +170,9 @@ def evaluate(model, ctx: Ctx, cfg: dict, kit_std: np.ndarray) -> dict:
             ok = (
                 res["finite"]
                 and res["nonzero"]
+                and res["localized"]
+                and res["propagates"]
+                and res["stable"]
                 and res.get("near_frac_day1", 0) >= gate["near_frac_min"]
                 and growth >= gate["growth_min"]
                 and res["far_frac_max"] <= gate["far_frac_max"]
@@ -185,8 +235,22 @@ def train(cfg: dict, dcfg: dict, quick: bool = False) -> Path:
                 )
                 for g in opt.param_groups:
                     g["lr"] = lr
-                pred = rollout(model, z0, slots, ctx.clim, ctx.s, ctx.static, k)
-                loss = ctx.loss(pred, tgt, heavy)
+                reg_w = float(stage.get("shock_reg", 0.0))
+                if reg_w > 0:
+                    nb = max(1, z0.shape[0] // 2)
+                    bump, support = make_bump(nb, dev)
+                    z0b = z0[:nb].clone()
+                    z0b[:, -1] = z0b[:, -1] + bump
+                    both = rollout(
+                        model, torch.cat([z0, z0b]), torch.cat([slots, slots[:nb]]), ctx.clim, ctx.s, ctx.static, k
+                    )
+                    pred, pb = both[: z0.shape[0]], both[z0.shape[0] :]
+                    loss = ctx.loss(pred, tgt, heavy) + reg_w * persistence_loss(
+                        pb - pred[:nb], support, float(stage.get("rho_persist", 0.5)), float(stage.get("rho_far", 0.08))
+                    )
+                else:
+                    pred = rollout(model, z0, slots, ctx.clim, ctx.s, ctx.static, k)
+                    loss = ctx.loss(pred, tgt, heavy)
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), float(o["grad_clip"]))
