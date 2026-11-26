@@ -10,9 +10,17 @@ import { useStore } from '../../state/store'
 export function MapView() {
   const meteo = useStore((s) => s.meteo && !!s.pin)
   const meta = useStore((s) => s.meta)
+  const startError = useStore((s) => s.startError)
   return (
     <div className={`mapview ${meteo ? 'with-meteo' : ''}`}>
       <MapStage />
+      {startError && (
+        <div className="empty" data-ui role="alert">
+          <b>Cannot load a start state</b>
+          <p>{startError}</p>
+          <small>The forecast server alone is not enough for the dashboard: it also needs the lab server and the local dataset (data/india_climate_train.nc).</small>
+        </div>
+      )}
       <TopLeft />
       <Drawer />
       <LayerMenu />

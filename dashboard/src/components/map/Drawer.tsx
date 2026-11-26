@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { CHANNELS, UNITS } from '../../api/types'
-import { CELLS, NLAT, NLON, chIndex, latOf, lonOf } from '../../lib/grid'
+import { CELLS, boxCells, chIndex } from '../../lib/grid'
+import { dayName } from '../../lib/dates'
+import { rainfallExposure, windowStart } from '../../lib/exposure'
 import { REGIONS } from '../../lib/regions'
 import { boxShock, cyclone, dryKerala, heatDome, monsoonStall, warmOcean } from '../../lib/shocks'
 import { IconBolt, IconShield } from '../icons'
@@ -12,6 +14,9 @@ function ShockPanel() {
   const [amt, setAmt] = useState(3)
   const [rel, setRel] = useState(false)
   const last = init ? init.subarray(2 * 6 * CELLS, 3 * 6 * CELLS) : null
+  const nCells = drawnBox ? boxCells(drawnBox[0], drawnBox[1], drawnBox[2], drawnBox[3]).length : 0
+  const amtOk = Number.isFinite(amt) && amt !== 0 && (!rel || (amt >= -100 && amt <= 1000))
+  const why = !drawnBox ? 'Draw a box on the map first.' : nCells === 0 ? 'The box is outside the model domain.' : !amtOk ? (rel ? 'Enter a percentage between -100 and 1000, not 0.' : 'Enter a non-zero number.') : ''
   const go = (f: (l: Float32Array) => ReturnType<typeof warmOcean>) => last && void fork(f(last))
   return (
     <>
@@ -25,13 +30,14 @@ function ShockPanel() {
       </div>
       <h4>Your own shock</h4>
       <button className={`draw ${drawMode ? 'on' : ''}`} onClick={() => set({ drawMode: !drawMode })}>{drawMode ? 'Drag a rectangle on the map…' : drawnBox ? 'Redraw the box' : 'Draw a box on the map'}</button>
-      {drawnBox && <p className="boxinfo">{drawnBox[0].toFixed(1)}–{drawnBox[1].toFixed(1)}°N · {drawnBox[2].toFixed(1)}–{drawnBox[3].toFixed(1)}°E</p>}
+      {drawnBox && <p className="boxinfo">{drawnBox[0].toFixed(1)}–{drawnBox[1].toFixed(1)}°N · {drawnBox[2].toFixed(1)}–{drawnBox[3].toFixed(1)}°E · {nCells} cells</p>}
       <div className="form">
         <label>Channel<select value={ch} onChange={(e) => setCh(e.target.value as typeof ch)}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></label>
         <label>Mode<select value={rel ? 'rel' : 'abs'} onChange={(e) => setRel(e.target.value === 'rel')}><option value="abs">add ({UNITS[ch]})</option><option value="rel">% of current</option></select></label>
         <label>Amount<input type="number" step="any" value={amt} onChange={(e) => setAmt(+e.target.value)} /></label>
       </div>
-      <button className="primary" disabled={!last || !drawnBox} onClick={() => last && drawnBox && void fork(boxShock(chIndex(ch), rel ? amt / 100 : amt, rel, drawnBox, last, `${ch} ${amt > 0 ? '+' : ''}${amt}${rel ? '%' : ' ' + UNITS[ch]}`))}>
+      {why && <p className="hint">{why}</p>}
+      <button className="primary" disabled={!last || !!why} onClick={() => last && drawnBox && void fork(boxShock(chIndex(ch), rel ? amt / 100 : amt, rel, drawnBox, last, `${ch} ${amt > 0 ? '+' : ''}${amt}${rel ? '%' : ' ' + UNITS[ch]}`))}>
         Fork universe
       </button>
       <h4>Universes</h4>
@@ -54,34 +60,29 @@ function ShockPanel() {
   )
 }
 
-function regionMean(roll: Float32Array, d: number, c: number, box: [number, number, number, number], land: number[][] | null): number {
-  let s = 0, n = 0
-  const off = (d * 6 + c) * CELLS
-  for (let i = 0; i < NLAT; i++) for (let j = 0; j < NLON; j++) {
-    if (latOf(i) < box[0] || latOf(i) > box[1] || lonOf(j) < box[2] || lonOf(j) > box[3]) continue
-    if (land && land[i][j] < 0.5) continue
-    s += roll[off + i * NLON + j]; n++
-  }
-  return n ? s / n : NaN
-}
-
 function AuditPanel() {
-  const { universes, selected, labOnline, tf, meta } = useStore()
+  const { universes, selected, labOnline, tf, meta, doy, weekday } = useStore()
+  const [thr, setThr] = useState(50)
   const u = universes[selected], ctl = universes[CONTROL]?.rollout
   if (selected === CONTROL || !u?.rollout || !ctl) return <p className="hint">Fork a universe to audit it: the official causality checks run live on every shock.</p>
   const v = u.verdict
-  const d = Math.min(Math.round(tf), 9)
-  const rows = REGIONS.map((r) => ({
-    name: r.name,
-    dT: regionMean(u.rollout!, d, 0, r.box, meta?.land_sea_mask ?? null) - regionMean(ctl, d, 0, r.box, meta?.land_sea_mask ?? null),
-    c: regionMean(ctl, d, 1, r.box, meta?.land_sea_mask ?? null),
-    s: regionMean(u.rollout!, d, 1, r.box, meta?.land_sea_mask ?? null),
-  })).sort((a, b) => Math.abs(b.s - b.c) - Math.abs(a.s - a.c)).slice(0, 6)
+  const scn = u.rollout
+  const N_DAYS = 3
+  const start = windowStart(tf, N_DAYS)
+  const land = meta?.land_sea_mask ?? null
+  const rows = land ? [
+    { name: 'All land in the domain', ...rainfallExposure(ctl, scn, start, N_DAYS, thr, land, null) },
+    ...REGIONS.map((r) => ({ name: r.name, ...rainfallExposure(ctl, scn, start, N_DAYS, thr, land, r.box) })),
+  ] : []
+  const [total, ...regions] = rows
+  regions.sort((a, b) => Math.abs(b.scnFrac - b.ctlFrac) + Math.abs(b.scnMm - b.ctlMm) / 200 - (Math.abs(a.scnFrac - a.ctlFrac) + Math.abs(a.scnMm - a.ctlMm) / 200))
+  const pct = (x: number) => `${Math.round(x * 100)}%`
+  const dpp = (a: number, b: number) => { const d = Math.round((b - a) * 100); return `${d >= 0 ? '+' : ''}${d} pp` }
   const ood = v?.ood
   return (
     <>
       <h4>Limits verdict</h4>
-      {!labOnline ? <p className="hint">Lab offline: the checks run in CI.</p> : !v ? <p className="hint">computing…</p> : (
+      {!labOnline || u.verdictFailed ? <p className="hint err">Verdict unavailable: the lab server did not answer. The shock itself ran on the forecast server; the official checks run in CI.</p> : !v ? <p className="hint">computing…</p> : (
         <>
           <ul className="checks">
             <li className={v.checks.nonzero ? 'ok' : 'bad'}>{v.checks.nonzero ? '✓' : '✗'} non-zero response</li>
@@ -96,11 +97,23 @@ function AuditPanel() {
           )}
         </>
       )}
-      <h4>Regional impact · day +{d + 1}</h4>
-      <table className="impact"><tbody>
-        {rows.map((r) => <tr key={r.name}><td>{r.name}</td><td>{r.c.toFixed(1)}→<b>{r.s.toFixed(1)}</b> <small>mm/d</small></td><td>{r.dT >= 0 ? '+' : ''}{r.dT.toFixed(2)} <small>K</small></td></tr>)}
-      </tbody></table>
-      <p className="hint">Mean over land cells of 1° (~110 km). The model&rsquo;s own response, not a verified forecast.</p>
+      <h4>Rainfall exposure</h4>
+      <div className="expo-head">
+        <span>3-day accumulation, <b>{dayName(doy, start + 1, weekday, true)} to {dayName(doy, start + N_DAYS, weekday, true)}</b></span>
+        <div className="thr" title="Declared threshold: accumulated rainfall over the 3 days">
+          {[25, 50, 100].map((x) => <button key={x} className={thr === x ? 'on' : ''} onClick={() => setThr(x)}>{x} mm</button>)}
+        </div>
+      </div>
+      <table className="impact expo">
+        <thead><tr><th>Region</th><th>3-day rain</th><th>Land above {thr} mm</th></tr></thead>
+        <tbody>
+          {total && <tr className="total"><td>{total.name}</td><td>{total.ctlMm.toFixed(0)}→<b>{total.scnMm.toFixed(0)}</b> <small>mm</small></td><td>{pct(total.ctlFrac)}→<b>{pct(total.scnFrac)}</b> <small className={total.scnFrac >= total.ctlFrac ? 'up' : 'down'}>{dpp(total.ctlFrac, total.scnFrac)}</small></td></tr>}
+          {regions.slice(0, 7).map((r) => (
+            <tr key={r.name}><td>{r.name}</td><td>{r.ctlMm.toFixed(0)}→<b>{r.scnMm.toFixed(0)}</b> <small>mm</small></td><td>{pct(r.ctlFrac)}→<b>{pct(r.scnFrac)}</b> <small className={r.scnFrac >= r.ctlFrac ? 'up' : 'down'}>{dpp(r.ctlFrac, r.scnFrac)}</small></td></tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="hint">Rainfall exposure only: accumulated model rainfall and the share of land <i>area</i> (latitude-weighted 1° land cells) above the threshold you choose, control against this scenario. It is not a flood probability or a crop-loss estimate. The scenario is the model&rsquo;s own response, not a verified forecast.</p>
     </>
   )
 }

@@ -12,8 +12,8 @@ by `docs/DECISIONS.md`, then the numbered docs.
 - **Event**: Yugaantar DevForge hackathon, Track 2 "Multiverse of Monsoon". 12-hour build, team of 3, goal first prize.
 - **Product**: Wethrfork, a Climate Digital Twin of India. It forecasts 6 weather channels on a 32 x 36 grid day by
   day, and branches ("forks") into alternate universes when a localized shock is applied.
-- **Identity**: "a weather model with a speed limit". The neural network cannot move information more than 8 grid
-  cells (about 900 km) per simulated day, so shocks stay local and then spread outward, which is exactly what the
+- **Identity**: "a weather model with a speed limit". The neural network's daily update can move information at most 8 grid
+  cells along either axis (about 900 km; up to 9.7 cells on a diagonal) per simulated day, so shocks stay local and then spread outward, which is exactly what the
   automated judge measures.
 - **Judge**: runs `python serve.py --port 8000` offline on CPU (4 cores, 6 GB RAM, read-only repo), waits up to 120 s
   for `/health`, then sends 8 `/simulate` calls (5 real windows from 2023-2024, 3 shocks). Each must answer in under
@@ -71,7 +71,7 @@ Read next, in order: `docs/PRD.md`, `docs/PHASES.md`, `docs/08-evaluation-and-sc
     mass or rain "fixers". Each of these leaks a shock across the whole map in one step.
 18. Advection displacement is a vector whose **length** is capped at 4 cells per day with a smooth `tanh` cap.
     Convolutional reach per step is at most 3 cells. Bilinear sampling adds 1. Total reach is at most 8 cells per
-    step, and the light-cone test (`tests/test_lightcone.py`) proves it with the kit's Euclidean distance.
+    step, and the light-cone test (`tests/test_lightcone.py`) checks the max-axis bound, the honest Euclidean bound (9.66 cells per step) and the judge's radius `3 + 8 * days`.
 19. Padding is `replicate` (border) in every convolution and `padding_mode="border"` in `grid_sample`. Never
     circular padding (it would teleport energy from the east edge to the west edge).
 20. The ridge model never contributes to the shock delta (it is per-cell and would keep the response inside the

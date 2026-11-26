@@ -56,7 +56,7 @@ This is the map. Details live in `02-architecture-and-dataflow.md` (data flow), 
 
 ## 3. Key architectural decisions (see DECISIONS.md for the full list)
 1. Two heads: skill head for the forecast, dynamics head for shock responses.
-2. Local network with a provable reach of 8 cells per day.
+2. Local network with a tested reach bound of 8 cells per day along either axis.
 3. Deterministic server; uncertainty comes from precomputed error maps.
 4. Route string only in `serve.py`; science features in a separate lab process.
 5. All dates in YAML configs; data never committed.

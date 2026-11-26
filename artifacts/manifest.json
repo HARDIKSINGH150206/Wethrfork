@@ -42,19 +42,32 @@
    "bytes": 169
   },
   "postproc.json": {
-   "sha256": "d4fd44caf5ffbdb864574c9c8c7e60618815130238f60be92e4275ca987b0bf3",
-   "bytes": 2501
+   "sha256": "ee1f461b2010d690b805f40789ec05be91852e19d0c6509e4bd992642be5f9f5",
+   "bytes": 2532
   },
   "sigma_err.npy": {
-   "sha256": "cec63ab98796f25dcd9d2e7704bf087ef1923f6d20169ec4bc8b804dcd963f39",
+   "sha256": "e7e3438b969306b10ec22364f53c796ade98fdb609fbd0274279cb3560ac11bc",
    "bytes": 387200
   },
   "sigma_err_logtp.npy": {
-   "sha256": "9b3a2fb6283547c1a7f4786a072692abddf226015a422841136611c207358f01",
+   "sha256": "0085fa1c537e9080419c155eb55833a8e395464d794c37cc2f3c27fdfa47dc76",
    "bytes": 64640
   }
  },
  "trained_on": "train split from configs/data.yaml",
+ "lineage": {
+  "skill_checkpoint_sha256": "cd0849184cd092c98cdb80da62aa33a60e37f32558658411f2ae11bb88ed993a",
+  "dynamics_checkpoint_sha256": "a6e43a00b49ff3aeeb39963d43f0572fc069e08374f37058dee9d07c0cab5d1d",
+  "configs": {
+   "data.yaml": "152c6dde5fb46047d88ba31d263dae37437ff8b18f7cc33ba7d19401e6cfdc89",
+   "ridge.yaml": "21847928351505aae5b2279451f46da8e86264bb271398c2cecb507146e751d3",
+   "train_skill.yaml": "d376e9c00722166a062a2dda841c89344909f14fca2ca6f6df19977ab8cff58a",
+   "train.yaml": "2eaa206bcf1b53bcee71caecff82227343425232abfba767578177cb64089edc",
+   "train_dyn_ft.yaml": "336299135790208dca872dc438c7da6140d5d7501ebab49bdf70e4ed71389a43",
+   "calib.yaml": "947f60eaa2ec1228799f52db08c02c3ae0fb4ebeb4e1aed56d748b558f8e1c3a"
+  },
+  "git_commit": "4c32131"
+ },
  "selfgrade": {
   "mean_ss_grade": null,
   "csi_skill_grade": null
