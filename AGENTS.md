@@ -152,6 +152,8 @@ When working in parallel, each agent edits only its lane's files. Shared files (
 | Unit tests | `make test` (pytest, fast, synthetic inputs only) |
 | Repo scan | `make scan` |
 | Judge-like run | `make judge` (offline container, read-only mount, 4 CPUs) |
+| Judge rehearsal (strict, scored with the kit) | `make rehearsal` |
+| Every gate before a push or tag | `make release-check` (`make release-check-quick` without data) |
 | Serve | `python serve.py --port 8000` |
 | Validator | `python -m monsoon_r1.schema_validator http://localhost:8000` |
 | Lab server | `python -m lab.lab_server --port 8001` |

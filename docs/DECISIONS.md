@@ -221,3 +221,43 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
   is what makes the judge's propagation check pass (D3, D34). The price is that the two routes disagree, which we state.
 - **How to answer**: "It is a control forecast plus a perturbation model, as in tangent-linear forecasting. They are not the same
   object, and here is the measured gap."
+
+### D42. Third pass on the map: a satellite-map look with a bundled, public-domain base map
+- **Decision**: the map shell now follows the layout of a satellite weather map. Supersedes the layout of D36 and D39
+  (their features stay):
+  - a logo tile and a frosted "Forecast maps" menu (Precipitation, Wind, Temperature, Moisture, Pressure) at the top left,
+    with a Universes section (fork, audit), and Difference, Swipe and Beyond-error as check rows under the active universe;
+  - round 40 px tools on the right (search, settings, info, draw a shock, speed-limit rings, show the whole domain), the
+    overlay toggles (particles, pressure lines) and zoom at the bottom right;
+  - a centred timeline capsule with 6-hourly ticks and a hover time, the legend and cursor position at the bottom left,
+    the run picker (control and universes, where a forecast-model switch would be) and a scale bar at the bottom right,
+    and the sources line at the bottom centre;
+  - frosted glass panels (`rgba(27,35,44,.625)`, 24 px blur, hairline glow), a blue accent, and labels drawn like a
+    satellite map: uppercase country names, city names over their dots, placement without overlaps.
+- **Base map**: `dashboard/public/basemap.jpg` (NASA Blue Marble, public domain, 40-126 E, 6 S-52 N, 24 px per degree,
+  419 KB) and `dashboard/public/borders.json` (Natural Earth 1:10m countries in **India's point of view**, public domain,
+  coast and land borders de-duplicated, 241 KB). Both are built once by `scripts/build_basemap.py` and committed, so the
+  dashboard still needs no network: one bundled image, not map tiles (the offline rule of `06-frontend-plan.md` holds).
+  Forecast colours are drawn semi-transparent over the imagery; rain is transparent where it is dry.
+- **Scope**: as in D36 and D39, we follow the layout and interaction pattern only. Name, logo, code, imagery and data are
+  our own or public domain. No third-party branding, fonts, code or assets are copied. Fonts are system fonts.
+- **Checks**: 16 dashboard unit tests, `npm run build`, a 13-step browser drive (layers, fork, difference, swipe, point
+  forecast, search, settings, info, timeline, collapsed menu, phone and 1280 x 720 viewports) with no console errors,
+  preflight 20 / 20 live checks including "no external hosts".
+
+### D43. Strict automated testing built on the organisers' own code
+- **Decision**: three testing layers (see `docs/10-testing-and-ci.md` section 7): judge-contract tests in CI
+  (`tests/test_judge_contract.py`), a judge rehearsal in a judge-like container (`evaluation/judge_rehearsal.py`,
+  `make rehearsal`) and one release command (`evaluation/release_check.py`, `make release-check`). All calls go
+  through the kit's client and validator and are scored with `monsoon_r1.scoring`; we add margins
+  (`configs/rehearsal.yaml`): ready within 30 s (judge 120), every call within 1.5 s (judge 5), peak memory 3 GB
+  (judge 6), null shock bit for bit (judge 1e-3 std), 15 / 15 causality on every shock window (the judge uses one),
+  day-4 persistence beaten on every channel (the judge's hard gate), full RMSE points.
+- **Why**: before this, `selfgrade` and `fuzz_gym` printed numbers but could not fail, and `make judge` started a
+  container without calling it. The judge's environment (no kit, no network, read-only, Python 3.11) was never tested
+  together with the judge's client.
+- **Evidence the gates bite**: five broken copies of the server (kit import, write into the repo, noise, 2 s delay,
+  negative rain) all fail the rehearsal; the contract tests reject the four that break the contract.
+- **Scope**: no change to the server, the model, the scoring reproduction or any threshold of the existing causality
+  gate. The rehearsal sends the day of year as the kit's `doy_sincos` of the calendar day (counted from 1) and checks
+  that counting from 0 changes skill by at most 0.01 (measured: 0.003).

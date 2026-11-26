@@ -1,0 +1,29 @@
+# Thresholds for the judge rehearsal (evaluation/judge_rehearsal.py) and the release check (evaluation/release_check.py).
+# "judge" limits are the organisers' own (kit v1.0.0: API_CONTRACT.md, monsoon_r1/client.py, monsoon_r1/scoring.py).
+# "strict" limits are ours, with margin for a judge machine slower than ours. A release needs both.
+# Window dates come from configs/eval.yaml (systematic = held-out 2021, typed = the judge's 5 window types, seasons).
+
+judge:
+  ready_s: 120.0            # /health must say ready within this, polled every 2 s
+  call_s: 5.0               # each forecast call, wall time measured by the client
+  memory_gb: 6.0
+  null_tol_std: 1.0e-3      # max |null - base| / std
+  causality_points: 7.5     # at least one shock must earn its localized response (hard gate: non-zero and localized)
+
+strict:
+  ready_s: 30.0
+  call_s: 1.5               # every call, including the first one after warm-up
+  memory_gb: 3.0            # peak memory of the server container (cgroup memory.peak)
+  null_max_diff: 0.0        # bit for bit: a zero shock skips the shocked run
+  causality_points: 15.0    # on EVERY shock window, not only on one
+  day4_beats_persistence: all_channels   # the judge's hard gate, held per channel instead of on average
+  mean_ss_min: 0.12         # full 30 RMSE points on held-out 2021
+  csi_skill_min: 0.05       # regression floor (full 15 points needs 0.10; shipped model: about 0.07)
+  blur_ratio: [0.5, 2.0]    # day-8 variance ratio per channel (judge: 0.4 to 2.5)
+  engine_drift_std: 1.0e-4  # judge container (Python 3.11) against the dev engine, max |difference| / std
+  doy_shift_skill_change: 0.01   # mean skill change if the judge counts day-of-year from 0 instead of 1
+
+release:
+  fuzz_validity: 1.0
+  fuzz_pass_rate: 0.95      # random shocks passing all four causality checks (last measured 0.995 on 200)
+  sweep_required: true      # all held-out windows, both official shocks (evaluation/shock_sweep.py)
