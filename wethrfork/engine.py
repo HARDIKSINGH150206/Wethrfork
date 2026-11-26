@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 from . import MODEL_NAME
-from .blend import PostProc, clamp
+from .blend import PostProc, clamp, limit_delta
 from .climatology import slot_of_last_day
 from .model import NetConfig, SpeedLimitNet, rollout
 from .normalize import from_z, to_z
@@ -48,6 +48,7 @@ class Engine:
         self.net: SpeedLimitNet | None = None
         self.pp = PostProc()
         self.clim_std: np.ndarray | None = None
+        self.kit_std: np.ndarray | None = None
 
     # ------------------------------------------------------------------ loading
     @classmethod
@@ -81,6 +82,8 @@ class Engine:
         self.s = torch.tensor(norm["anom_std"], dtype=torch.float32)
         self.static_t = torch.from_numpy(np.load(d / "static.npy").astype(np.float32)).clone()
         self.static_t[1] = self.static_t[1] / 1000.0  # orography in km
+        sp = d / "stats.json"
+        self.kit_std = np.array(json.loads(sp.read_text())["std"], dtype=np.float32) if sp.exists() else None
         cs = d / "clim_std.npy"
         self.clim_std = np.load(cs).astype(np.float32) if cs.exists() else None
         rp = d / "ridge.pt"
@@ -170,6 +173,8 @@ class Engine:
 
         if shocked and nn_phys is not None:
             delta = np.nan_to_num(nn_phys[1] - nn_phys[0]).astype(np.float32)
+            if self.kit_std is not None:
+                delta = limit_delta(delta, self.kit_std)
         elif shocked:  # ridge-only fallback: response lives inside the shock box only
             z_r2 = self.ridge.predict(z0[1], slots_t[0, 1:]).numpy()
             delta = (
