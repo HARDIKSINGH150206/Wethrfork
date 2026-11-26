@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { IconPause, IconPlay } from '../icons'
-import { dayLabel } from '../../lib/dates'
+import { dayLabel, dayName } from '../../lib/dates'
 import { useStore } from '../../state/store'
 
 /** Bottom timeline: play button, one segment per forecast day, a bubble above the handle. */
 export function Timeline() {
-  const { tf, playing, speed, set, doy } = useStore()
+  const { tf, playing, speed, set, doy, weekday } = useStore()
   const bar = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!playing) return
@@ -34,9 +34,9 @@ export function Timeline() {
       <div className="bar" ref={bar} onPointerDown={(e) => { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); seek(e.clientX) }} onPointerMove={(e) => { if (e.buttons) seek(e.clientX) }}>
         <div className="past" style={{ width: `${pos}%` }} />
         {Array.from({ length: 10 }, (_, d) => (
-          <div key={d} className={`seg ${Math.round(tf) === d ? 'on' : ''}`}><span>{dayLabel(doy, d + 1)}</span></div>
+          <div key={d} className={`seg ${Math.round(tf) === d ? 'on' : ''}`}><span className="long">{dayName(doy, d + 1, weekday)}</span><span className="short">{dayName(doy, d + 1, weekday, true)}</span></div>
         ))}
-        <div className="bub" style={{ left: `${pos}%` }}>{dayLabel(doy, Math.round(tf) + 1)} · day +{(tf + 1).toFixed(1)}</div>
+        <div className="bub" style={{ left: `${pos}%` }}>{dayName(doy, Math.round(tf) + 1, weekday, true)} · {dayLabel(doy, Math.round(tf) + 1)} · +{(tf + 1).toFixed(1)} d</div>
       </div>
       <button className="spd" onClick={() => set({ speed: speed >= 2 ? 0.5 : speed * 2 })} title="Playback speed">{speed}×</button>
     </footer>

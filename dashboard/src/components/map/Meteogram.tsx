@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { CELLS } from '../../lib/grid'
 import { sample } from '../../lib/interp'
 import { scalarAt, windAt } from '../../lib/layers'
-import { dayLabel, placeName } from '../../lib/dates'
-import { pressOf, pressLabel, tempLabel, tempOf, windLabel, windOf } from '../../lib/units'
+import { dayName, placeName } from '../../lib/dates'
+import { pressLabel, pressOf, tempLabel, tempOf, windLabel, windOf } from '../../lib/units'
 import { CONTROL, useStore } from '../../state/store'
 
 const U = new Float32Array(CELLS), V = new Float32Array(CELLS)
@@ -29,7 +29,8 @@ const tempColor = (c: number) => `hsl(${Math.max(Math.min(220 - (c + 5) * 5.2, 2
 
 /** Windy-style detailed forecast for the pinned point: one column per day, selected universe against control. */
 export function Meteogram() {
-  const { pin, universes, selected, units, tf, set, doy } = useStore()
+  const { pin, universes, selected, units, tf, set, doy, weekday } = useStore()
+  const [mode, setMode] = useState<'basic' | 'chart'>('basic')
   const sel = universes[selected]?.rollout, ctl = universes[CONTROL]?.rollout
   const data = useMemo(() => (pin && sel ? rows(sel, pin.lat, pin.lon) : null), [pin, sel])
   const base = useMemo(() => (pin && ctl && selected !== CONTROL ? rows(ctl, pin.lat, pin.lon) : null), [pin, ctl, selected])
@@ -43,11 +44,16 @@ export function Meteogram() {
       <header>
         <b>{placeName(pin.lat, pin.lon)}</b>
         <span>{placeName(pin.lat, pin.lon).includes('°') ? '' : `${pin.lat.toFixed(2)}°N ${pin.lon.toFixed(2)}°E · `}{universes[selected]?.name}{base ? ' vs control' : ''}</span>
+        <div className="mtabs">
+          <button className={mode === 'basic' ? 'on' : ''} onClick={() => setMode('basic')}>Basic</button>
+          <button className={mode === 'chart' ? 'on' : ''} onClick={() => setMode('chart')}>Meteogram</button>
+        </div>
         <button onClick={() => set({ meteo: false })} aria-label="Close">×</button>
       </header>
+      {mode === 'chart' ? <Chart data={data} base={base} day={day} units={units} labels={data.map((_, d) => dayName(doy, d + 1, weekday, true))} onDay={(d) => set({ tf: d })} /> : (
       <table>
         <tbody>
-          <tr className="days"><th />{data.map((_, d) => <td key={d} className={d === day ? 'cur' : ''} onClick={() => set({ tf: d })}>{dayLabel(doy, d + 1)}<small>+{d + 1}</small></td>)}</tr>
+          <tr className="days"><th />{data.map((_, d) => <td key={d} className={d === day ? 'cur' : ''} onClick={() => set({ tf: d })}>{dayName(doy, d + 1, weekday, true)}<small>+{d + 1} d</small></td>)}</tr>
           <tr><th>Temperature <small>{tempLabel(units.temp)}</small></th>{data.map((r, d) => (
             <td key={d} className={d === day ? 'cur' : ''}><span className="chip" style={{ background: tempColor(r.t - 273.15) }}>{tempOf(r.t, units.temp).toFixed(0)}°</span>{diff(r.t, base?.[d].t, (x) => tempOf(x, units.temp))}</td>))}</tr>
           <tr><th>Rain <small>mm</small></th>{data.map((r, d) => (
@@ -60,6 +66,43 @@ export function Meteogram() {
             <td key={d} className={d === day ? 'cur' : ''}>{r.q.toFixed(0)}{diff(r.q, base?.[d].q, (x) => x)}</td>))}</tr>
         </tbody>
       </table>
+      )}
     </section>
+  )
+}
+
+type Row = ReturnType<typeof rows>[number]
+interface ChartProps { data: Row[]; base: Row[] | null; day: number; units: import('../../lib/units').Units; labels: string[]; onDay: (d: number) => void }
+
+/** Meteogram: temperature and pressure lines over rain bars, universe solid, control dashed. */
+function Chart({ data, base, day, units, labels, onDay }: ChartProps) {
+  const W = 1200, H = 230, L = 60, R = 60, T = 14, B = 34
+  const x = (d: number) => L + ((d + 0.5) / 10) * (W - L - R)
+  const temps = [...data, ...(base ?? [])].map((r) => tempOf(r.t, units.temp))
+  const tLo = Math.floor(Math.min(...temps) - 1), tHi = Math.ceil(Math.max(...temps) + 1)
+  const yT = (v: number) => T + (1 - (v - tLo) / (tHi - tLo || 1)) * (H - T - B) * 0.62
+  const pr = [...data, ...(base ?? [])].map((r) => pressOf(r.p, units.press))
+  const pLo = Math.min(...pr) - 1, pHi = Math.max(...pr) + 1
+  const yP = (v: number) => T + (1 - (v - pLo) / (pHi - pLo || 1)) * (H - T - B) * 0.62
+  const rMax = Math.max(10, ...data.map((r) => r.r), ...(base ?? []).map((r) => r.r))
+  const rainTop = T + (H - T - B) * 0.66
+  const yR = (v: number) => H - B - (v / rMax) * (H - B - rainTop)
+  const path = (rs: Row[], f: (r: Row) => number) => rs.map((r, d) => `${d ? 'L' : 'M'}${x(d)},${f(r)}`).join(' ')
+  const bw = (W - L - R) / 10
+  return (
+    <svg className="mchart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      {data.map((_, d) => <rect key={d} x={L + d * bw} y={T} width={bw} height={H - T - B} className={d === day ? 'colcur' : d % 2 ? 'colodd' : 'col'} onClick={() => onDay(d)} />)}
+      {data.map((r, d) => <rect key={'r' + d} x={x(d) - bw * 0.18} y={yR(r.r)} width={bw * 0.36} height={H - B - yR(r.r)} className="mrain" />)}
+      {data.map((r, d) => <text key={'rt' + d} x={x(d)} y={yR(r.r) - 3} className="mrt">{r.r >= 0.1 ? r.r.toFixed(1) : ''}</text>)}
+      {base && <path d={path(base, (r) => yP(pressOf(r.p, units.press)))} className="mpress ctl" />}
+      <path d={path(data, (r) => yP(pressOf(r.p, units.press)))} className="mpress" />
+      {base && <path d={path(base, (r) => yT(tempOf(r.t, units.temp)))} className="mtemp ctl" />}
+      <path d={path(data, (r) => yT(tempOf(r.t, units.temp)))} className="mtemp" />
+      {data.map((r, d) => <text key={'t' + d} x={x(d)} y={yT(tempOf(r.t, units.temp)) - 8} className="mtt">{tempOf(r.t, units.temp).toFixed(0)}°</text>)}
+      {labels.map((l, d) => <text key={'l' + d} x={x(d)} y={H - 12} className="mlab">{l}</text>)}
+      <text x={8} y={T + 10} className="maxis">{tempLabel(units.temp)}</text>
+      <text x={W - 8} y={T + 10} className="maxis r">{pressLabel(units.press)}</text>
+      <text x={8} y={H - B - 4} className="maxis">rain mm</text>
+    </svg>
   )
 }
