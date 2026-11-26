@@ -15,6 +15,7 @@ export interface Universe {
   box: [number, number, number, number] | null
   rollout: Float32Array | null
   verdict: Verdict | null
+  verdictFailed?: boolean
   status: 'loading' | 'ready' | 'error'
   error?: string
   wallMs?: number
@@ -72,7 +73,14 @@ interface Store {
   runSensitivity: (lat: number, lon: number) => Promise<void>
 }
 
+/** Readable text of a thrown value: drops the error class prefix ("TypeError: ") and maps fetch failures to plain words. */
+const errMsg = (e: unknown): string => {
+  const s = String(e).replace(/^[A-Za-z]*Error: /, '')
+  return /failed to fetch|networkerror|load failed/i.test(s) ? 'the server is not reachable' : s
+}
 export const CONTROL = 'control'
+let epoch = 0 // bumped on every start-state change: results that belong to an older epoch are dropped
+let forkSeq = 0
 const TARGET_CHANNEL: Record<LayerId, string> = { wind: 'u10', temp: 't2m', rain: 'tp', pressure: 'msl', moisture: 'tcwv' }
 
 export const useStore = create<Store>((set, get) => ({
@@ -90,7 +98,7 @@ export const useStore = create<Store>((set, get) => ({
     try {
       set({ meta: await getMeta(), labOnline: true })
     } catch (e) {
-      set({ labOnline: false, startError: `The lab server is not reachable. Start it with: make demo  (${String(e).replace('Error: ', '')})` })
+      set({ labOnline: false, startError: `The lab server is not reachable. Start it with: make demo  (${errMsg(e)})` })
       return
     }
     try {
@@ -99,41 +107,56 @@ export const useStore = create<Store>((set, get) => ({
       if (!windows.length) { set({ startError: 'No start states are configured (configs/demo.yaml).' }); return }
       await get().selectWindow(windows[0].id)
     } catch (e) {
-      set({ startError: String(e).replace('Error: ', '') })
+      set({ startError: errMsg(e) })
     }
   },
 
   selectWindow: async (id) => {
-    const w = await getWindow(id)
+    const my = ++epoch
+    let w
+    try {
+      w = await getWindow(id)
+    } catch (e) {
+      if (my === epoch) set({ startError: errMsg(e) })
+      return
+    }
+    if (my !== epoch) return
     const init = flatten(w.init_states)
     const doy = w.doy_sincos
     const control: Universe = { id: CONTROL, name: 'Control', perturbation: null, box: null, rollout: null, verdict: null, status: 'loading' }
     set({
       windowId: id, init, doy, truth: w.truth ? flatten(w.truth) : null, clim: w.clim ? flatten(w.clim) : null, weekday: w.weekday ?? null,
-      universes: { [CONTROL]: control }, order: [CONTROL], selected: CONTROL, tf: 0, pin: null, sens: null, drawnBox: null, meteo: false,
+      universes: { [CONTROL]: control }, order: [CONTROL], selected: CONTROL, tf: 0, pin: null, sens: null, drawnBox: null, meteo: false, startError: null,
     })
     try {
       const r = await simulate(init, doy, null)
+      if (my !== epoch) return
       set((s) => ({ universes: { ...s.universes, [CONTROL]: { ...control, rollout: r.rollout, status: 'ready', wallMs: r.wallMs } } }))
     } catch (e) {
-      set((s) => ({ universes: { ...s.universes, [CONTROL]: { ...control, status: 'error', error: String(e) } } }))
+      if (my !== epoch) return
+      set((s) => ({ universes: { ...s.universes, [CONTROL]: { ...control, status: 'error', error: errMsg(e) } } }))
     }
   },
 
   fork: async (spec) => {
     const { init, doy } = get()
     if (!init || !doy) return
-    const id = `u${Date.now().toString(36)}`
+    const my = epoch
+    const id = `u${++forkSeq}`
     const uni: Universe = { id, name: spec.name, perturbation: spec.perturbation, box: spec.box, rollout: null, verdict: null, status: 'loading' }
     set((s) => ({ universes: { ...s.universes, [id]: uni }, order: [...s.order, id], selected: id, drawnBox: null, drawMode: false }))
-    const verdictCall = get().labOnline
-      ? postVerdict({ init_states: Array.from(init), doy_sincos: doy, perturbation: Array.from(spec.perturbation), box: spec.box, steps: 10 }).catch(() => null)
-      : Promise.resolve(null)
+    const verdictCall: Promise<{ v: Verdict | null; failed: boolean }> = get().labOnline
+      ? postVerdict({ init_states: Array.from(init), doy_sincos: doy, perturbation: Array.from(spec.perturbation), box: spec.box, steps: 10 })
+          .then((v) => ({ v, failed: false }))
+          .catch(() => ({ v: null, failed: true }))
+      : Promise.resolve({ v: null, failed: true })
     try {
-      const [r, v] = await Promise.all([simulate(init, doy, spec.perturbation), verdictCall])
-      set((s) => ({ universes: { ...s.universes, [id]: { ...uni, rollout: r.rollout, verdict: v, status: 'ready', wallMs: r.wallMs } } }))
+      const [r, vr] = await Promise.all([simulate(init, doy, spec.perturbation), verdictCall])
+      if (my !== epoch) return
+      set((s) => ({ universes: { ...s.universes, [id]: { ...uni, rollout: r.rollout, verdict: vr.v, verdictFailed: vr.failed, status: 'ready', wallMs: r.wallMs } } }))
     } catch (e) {
-      set((s) => ({ universes: { ...s.universes, [id]: { ...uni, status: 'error', error: String(e) } } }))
+      if (my !== epoch) return
+      set((s) => ({ universes: { ...s.universes, [id]: { ...uni, status: 'error', error: errMsg(e) } } }))
     }
   },
 
@@ -144,11 +167,13 @@ export const useStore = create<Store>((set, get) => ({
     if (!init || !doy || !meta) return
     const i = Math.round(lat - 6.5), j = Math.round(lon - 65.5)
     if (i < 0 || j < 0 || i > 31 || j > 35) return
+    const my = epoch
     const channel = TARGET_CHANNEL[layer]
     const lead = Math.min(Math.max(Math.round(tf) + 1, 1), 10)
     set({ sensBusy: true })
     try {
       const r = await postSensitivity({ init_states: Array.from(init), doy_sincos: doy, target: { cells: [[i, j]], channel, lead } })
+      if (my !== epoch) { set({ sensBusy: false }); return }
       const g = flatten(r.grad) // [6,32,36] gradient wrt the last input day
       const map = new Float32Array(CELLS)
       for (let c = 0; c < NC; c++) for (let k = 0; k < CELLS; k++) map[k] += Math.abs(g[c * CELLS + k]) * (meta.std[c] ?? 1)

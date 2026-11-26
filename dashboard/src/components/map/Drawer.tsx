@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CHANNELS, UNITS } from '../../api/types'
-import { CELLS, chIndex } from '../../lib/grid'
+import { CELLS, boxCells, chIndex } from '../../lib/grid'
 import { dayName } from '../../lib/dates'
 import { rainfallExposure, windowStart } from '../../lib/exposure'
 import { REGIONS } from '../../lib/regions'
@@ -14,6 +14,9 @@ function ShockPanel() {
   const [amt, setAmt] = useState(3)
   const [rel, setRel] = useState(false)
   const last = init ? init.subarray(2 * 6 * CELLS, 3 * 6 * CELLS) : null
+  const nCells = drawnBox ? boxCells(drawnBox[0], drawnBox[1], drawnBox[2], drawnBox[3]).length : 0
+  const amtOk = Number.isFinite(amt) && amt !== 0 && (!rel || (amt >= -100 && amt <= 1000))
+  const why = !drawnBox ? 'Draw a box on the map first.' : nCells === 0 ? 'The box is outside the model domain.' : !amtOk ? (rel ? 'Enter a percentage between -100 and 1000, not 0.' : 'Enter a non-zero number.') : ''
   const go = (f: (l: Float32Array) => ReturnType<typeof warmOcean>) => last && void fork(f(last))
   return (
     <>
@@ -27,13 +30,14 @@ function ShockPanel() {
       </div>
       <h4>Your own shock</h4>
       <button className={`draw ${drawMode ? 'on' : ''}`} onClick={() => set({ drawMode: !drawMode })}>{drawMode ? 'Drag a rectangle on the map…' : drawnBox ? 'Redraw the box' : 'Draw a box on the map'}</button>
-      {drawnBox && <p className="boxinfo">{drawnBox[0].toFixed(1)}–{drawnBox[1].toFixed(1)}°N · {drawnBox[2].toFixed(1)}–{drawnBox[3].toFixed(1)}°E</p>}
+      {drawnBox && <p className="boxinfo">{drawnBox[0].toFixed(1)}–{drawnBox[1].toFixed(1)}°N · {drawnBox[2].toFixed(1)}–{drawnBox[3].toFixed(1)}°E · {nCells} cells</p>}
       <div className="form">
         <label>Channel<select value={ch} onChange={(e) => setCh(e.target.value as typeof ch)}>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select></label>
         <label>Mode<select value={rel ? 'rel' : 'abs'} onChange={(e) => setRel(e.target.value === 'rel')}><option value="abs">add ({UNITS[ch]})</option><option value="rel">% of current</option></select></label>
         <label>Amount<input type="number" step="any" value={amt} onChange={(e) => setAmt(+e.target.value)} /></label>
       </div>
-      <button className="primary" disabled={!last || !drawnBox} onClick={() => last && drawnBox && void fork(boxShock(chIndex(ch), rel ? amt / 100 : amt, rel, drawnBox, last, `${ch} ${amt > 0 ? '+' : ''}${amt}${rel ? '%' : ' ' + UNITS[ch]}`))}>
+      {why && <p className="hint">{why}</p>}
+      <button className="primary" disabled={!last || !!why} onClick={() => last && drawnBox && void fork(boxShock(chIndex(ch), rel ? amt / 100 : amt, rel, drawnBox, last, `${ch} ${amt > 0 ? '+' : ''}${amt}${rel ? '%' : ' ' + UNITS[ch]}`))}>
         Fork universe
       </button>
       <h4>Universes</h4>
@@ -78,7 +82,7 @@ function AuditPanel() {
   return (
     <>
       <h4>Limits verdict</h4>
-      {!labOnline ? <p className="hint">Lab offline: the checks run in CI.</p> : !v ? <p className="hint">computing…</p> : (
+      {!labOnline || u.verdictFailed ? <p className="hint err">Verdict unavailable: the lab server did not answer. The shock itself ran on the forecast server; the official checks run in CI.</p> : !v ? <p className="hint">computing…</p> : (
         <>
           <ul className="checks">
             <li className={v.checks.nonzero ? 'ok' : 'bad'}>{v.checks.nonzero ? '✓' : '✗'} non-zero response</li>
