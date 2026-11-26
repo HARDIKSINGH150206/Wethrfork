@@ -1,7 +1,7 @@
 PY ?= python
 CFG ?= configs
 
-.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep test scan serve validate judge lab dash demo preflight status figures brief
+.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep stress audit-http test scan serve validate judge lab dash demo preflight status figures brief
 
 setup:
 	$(PY) -m venv .venv && . .venv/bin/activate && pip install -r requirements-dev.txt
@@ -47,6 +47,13 @@ fuzz:
 	$(PY) -m evaluation.fuzz_gym --config $(CFG)/fuzz.yaml
 sweep:
 	$(PY) -m evaluation.shock_sweep
+stress:
+	$(PY) -m evaluation.dataset_audit
+	$(PY) -m evaluation.stress_extreme
+	$(PY) -m evaluation.stress_locality
+	$(PY) -m evaluation.stress_archive
+audit-http:
+	$(PY) -m evaluation.stress_http --port 8000   # needs a running forecast server
 figures:
 	$(PY) -m evaluation.report --all
 
