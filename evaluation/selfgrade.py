@@ -104,6 +104,7 @@ def main() -> None:
     out = ROOT / "runs" / "selfgrade"
     out.mkdir(parents=True, exist_ok=True)
     (out / f"{args.tag}.json").write_text(json.dumps(res, indent=1))
+    (out / "latest.json").write_text(json.dumps(res, indent=1))
 
 
 if __name__ == "__main__":
