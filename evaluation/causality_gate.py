@@ -55,6 +55,9 @@ def passes(res: dict, gate: dict) -> dict:
         ok[name] = bool(
             r["finite"]
             and r["nonzero"]
+            and r["localized"]  # the judge's own flags must pass as well as our stricter thresholds
+            and r["propagates"]
+            and r["stable"]
             and r.get("near_frac_day1", 0) >= gate["near_frac_min"]
             and r["growth_ratio"] >= gate["growth_min"]
             and r["far_frac_max"] <= gate["far_frac_max"]
