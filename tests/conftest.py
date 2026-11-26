@@ -34,7 +34,7 @@ def doy() -> list[float]:
     return sincos_of_slot(190)
 
 
-def build_test_artifacts(d: Path, with_nn: bool = True, with_ridge: bool = True, seed: int = 1) -> Path:
+def build_test_artifacts(d: Path, with_nn: bool = True, with_ridge: bool = True, seed: int = 1, with_dyn: bool = False) -> Path:
     """Write tiny random artifacts (never committed) so engine tests run without data or training."""
     import json
 
@@ -67,6 +67,13 @@ def build_test_artifacts(d: Path, with_nn: bool = True, with_ridge: bool = True,
             torch.nn.init.normal_(net.disp_corr.weight, std=0.05)
         torch.save(net.state_dict(), d / "nn.pt")
         (d / "nn_config.json").write_text(json.dumps(net.cfg.to_dict()))
+    if with_dyn:
+        torch.manual_seed(seed + 5)
+        dyn = SpeedLimitNet(NetConfig(hidden=16))
+        with torch.no_grad():
+            torch.nn.init.normal_(dyn.head.weight, std=0.05)
+        torch.save(dyn.state_dict(), d / "nn_dyn.pt")
+        (d / "nn_dyn_config.json").write_text(json.dumps(dyn.cfg.to_dict()))
     return d
 
 
