@@ -195,3 +195,11 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 - **Decision**: `wethrfork.io.parse_request` validates structure (shapes, types, JSON); malformed bodies get 400 or 422
   with a message. Unusual values (NaN, huge numbers, out-of-range steps or dates) are still accepted and answered with a
   valid forecast. A perturbation with a leading batch dimension of 1 is accepted.
+
+### D39. Second pass on the map: follow the consumer weather-map layout closely
+- **Decision**: the map now fills the screen edge to edge (panning is clamped to the model domain; a button shows the whole
+  domain), with a menu and location search top-left, the overlay list on the right (label plus round icon), a thin day
+  timeline with a time bubble, a compact legend with values inside the colour bar, a universe picker in place of a
+  forecast-model picker, city labels, a click picker and a detailed 10-day forecast panel. Secondary views open as a sheet.
+- **Scope**: we follow the layout and interaction pattern only. Name, logo, code and assets are our own, and everything
+  runs offline on our own forecasts.
