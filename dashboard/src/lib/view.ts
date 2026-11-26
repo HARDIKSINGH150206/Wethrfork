@@ -23,3 +23,21 @@ export function zoomAt(v: View, x: number, y: number, factor: number): View {
 export function panBy(v: View, dx: number, dy: number): View {
   return { ...v, cx: v.cx - dx / v.scale, cy: v.cy + dy / v.scale }
 }
+
+/** Fill the screen edge to edge (the model domain covers the viewport, as a weather map does). */
+export function coverView(w: number, h: number, bottom = 44): View {
+  const s = Math.max(w / (LON_MAX - LON_MIN), (h - bottom) / (LAT_MAX - LAT_MIN))
+  return clampView({ scale: s, cx: 82.5, cy: 21.5, w, h }, bottom)
+}
+
+/** Keep the data under the whole screen when zoomed in at least to "cover"; otherwise centre the domain. */
+export function clampView(v: View, bottom = 44): View {
+  const halfW = v.w / 2 / v.scale, halfH = v.h / 2 / v.scale
+  const usableTop = LAT_MAX, usableBottom = LAT_MIN - bottom / v.scale
+  let cx = v.cx, cy = v.cy
+  if (2 * halfW <= LON_MAX - LON_MIN) cx = Math.min(Math.max(cx, LON_MIN + halfW), LON_MAX - halfW)
+  else cx = (LON_MIN + LON_MAX) / 2
+  if (2 * halfH <= usableTop - usableBottom) cy = Math.min(Math.max(cy, usableBottom + halfH), usableTop - halfH)
+  else cy = (LAT_MIN + LAT_MAX) / 2 - bottom / 2 / v.scale
+  return { ...v, cx, cy }
+}

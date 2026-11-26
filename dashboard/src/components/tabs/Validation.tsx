@@ -87,6 +87,16 @@ export function Validation() {
   useEffect(() => { getFuzz().then((d) => setFuzz(d as Fuzz)).catch(() => null); getNatural().then((d) => setNat(d as Natural)).catch(() => null) }, [])
   const g = grade?.systematic
   const amps = useMemo(() => (fuzz?.cases ? Array.from(new Set(fuzz.cases.map((c) => c.amp))).sort() : []), [fuzz])
+  const weakest = useMemo(() => {
+    if (!fuzz?.cases) return ''
+    const cells: { c: string; a: string; r: number; n: number }[] = []
+    for (const c of CH) for (const a of amps) {
+      const v = fuzz.cases.filter((x) => x.channel === c && x.amp === a)
+      if (v.length) cells.push({ c, a, r: v.filter((x) => x.pass).length / v.length, n: v.length })
+    }
+    const bad = cells.filter((x) => x.r < 1).sort((p, q) => p.r - q.r)
+    return bad.length ? `Weakest: ${bad.slice(0, 2).map((x) => `${x.c} at ${x.a} (${Math.round(x.r * 100)}% of ${x.n})`).join(', ')}.` : 'Every sampled combination passed.'
+  }, [fuzz, amps])
   const natField = (key: 'd_tp' | 'd_msl', which: 'observed_composite' | 'model_response') => {
     const a = nat?.[which]?.[key]
     if (!a) return null
@@ -100,7 +110,7 @@ export function Validation() {
         <div className="stat"><b>{g ? g.mean_ss.toFixed(3) : '–'}</b><span>mean RMSE skill<br />held out · {g?.n_windows} windows · full marks at 0.12</span></div>
         <div className="stat"><b>{g ? g.mean_csi_skill.toFixed(3) : '–'}</b><span>heavy-rain CSI skill<br />threshold 10 mm/day</span></div>
         <div className="stat"><b>{g ? Math.min(...g.var_ratio_day8_mean).toFixed(2) : '–'}</b><span>lowest day-8 variance ratio<br />judge floor 0.4</span></div>
-        <div className="stat"><b>{fuzz?.validity !== undefined ? `${Math.round(fuzz.validity * 100)}%` : '–'}</b><span>valid outputs over {fuzz?.n ?? '–'} fuzz shocks<br />{fuzz?.pass_rate !== undefined ? `${Math.round(fuzz.pass_rate * 100)}% causal` : ''}</span></div>
+        <div className="stat"><b>{fuzz?.validity !== undefined ? `${(fuzz.validity * 100).toFixed(fuzz.validity < 1 ? 1 : 0)}%` : '–'}</b><span>valid outputs over {fuzz?.n ?? '–'} fuzz shocks<br />{fuzz?.pass_rate !== undefined ? `${(fuzz.pass_rate * 100).toFixed(1)}% causal` : ''}</span></div>
       </div>
       <div className="cards2">
         <section className="card">
@@ -127,7 +137,7 @@ export function Validation() {
                 return <td key={a} style={{ background: v.length ? heat(v.filter((x) => x.pass).length / v.length) : 'transparent' }}>{v.length ? `${Math.round((v.filter((x) => x.pass).length / v.length) * 100)}` : ''}</td>
               })}</tr>)}</tbody></table>
           ) : <p className="hint">Run <code>make fuzz</code> and start the lab server to see this.</p>}
-          <small className="dim">Blank = combination not sampled. Wind shocks and 40%-of-current-value shocks are the weak spots.</small>
+          <small className="dim">Blank = combination not sampled. {weakest}</small>
         </section>
         <section className="card">
           <h3>Natural experiment · warm, moist Bay days</h3>

@@ -42,7 +42,7 @@ export function Meteogram() {
     <section className="meteo" data-ui onPointerDown={(e) => e.stopPropagation()}>
       <header>
         <b>{placeName(pin.lat, pin.lon)}</b>
-        <span>{pin.lat.toFixed(2)}°N {pin.lon.toFixed(2)}°E · {universes[selected]?.name}{base ? ' vs control' : ''}</span>
+        <span>{placeName(pin.lat, pin.lon).includes('°') ? '' : `${pin.lat.toFixed(2)}°N ${pin.lon.toFixed(2)}°E · `}{universes[selected]?.name}{base ? ' vs control' : ''}</span>
         <button onClick={() => set({ meteo: false })} aria-label="Close">×</button>
       </header>
       <table>

@@ -8,7 +8,7 @@ import type { Polyline } from '../../lib/render'
 import { deltaScale } from '../../lib/series'
 import { CONTROL, useStore } from '../../state/store'
 import type { View } from '../../lib/view'
-import { fitView, panBy, projX, projY, unprojLat, unprojLon, zoomAt } from '../../lib/view'
+import { clampView, coverView, fitView, panBy, projX, projY, unprojLat, unprojLon, zoomAt } from '../../lib/view'
 import { PointPicker } from './PointPicker'
 import { CITIES, SEAS } from '../../lib/cities'
 
@@ -50,7 +50,7 @@ export function MapStage() {
     const ro = new ResizeObserver(() => {
       const r = el.getBoundingClientRect()
       setSize({ w: r.width, h: r.height })
-      setView(fitView(r.width, r.height))
+      setView(coverView(r.width, r.height))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -60,7 +60,7 @@ export function MapStage() {
     if (!focus) return
     setView((v) => {
       const base0 = fitView(v.w, v.h).scale
-      return { ...v, scale: base0 * focus.zoom, cx: focus.lon, cy: focus.lat }
+      return clampView({ ...v, scale: base0 * focus.zoom, cx: focus.lon, cy: focus.lat })
     })
   }, [focus])
 
@@ -192,9 +192,10 @@ export function MapStage() {
     g.font = 'italic 500 12px system-ui'; g.fillStyle = 'rgba(255,255,255,0.45)'
     for (const s2 of SEAS) g.fillText(s2.name, projX(view, s2.lon), projY(view, s2.lat))
     for (const c of CITIES) {
-      if (c.rank === 3 && z < 1.5) continue
+      if (c.rank === 3 && z < 2.2) continue
       const cx = projX(view, c.lon), cy = projY(view, c.lat)
-      if (cx < 0 || cy < 0 || cx > size.w || cy > size.h) continue
+      if (cx < 0 || cy < 0 || cx > size.w || cy > size.h - 50) continue
+      if ((cx > size.w - 230 && cy < 460) || (cx < 380 && cy < 110)) continue
       g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, c.rank === 1 ? 2.6 : 2, 0, Math.PI * 2); g.fill()
       g.font = `${c.rank === 1 ? 600 : 500} ${c.rank === 1 ? 13 : 12}px system-ui`
       g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.strokeText(c.name, cx + 6, cy)
@@ -252,7 +253,7 @@ export function MapStage() {
   }
   const onWheel = useCallback((e: React.WheelEvent) => {
     const p = rel(e)
-    setView((v) => zoomAt(v, p.x, p.y, Math.exp(-e.deltaY * 0.0015)))
+    setView((v) => clampView(zoomAt(v, p.x, p.y, Math.exp(-e.deltaY * 0.0015))))
   }, [])
   const onDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('[data-ui]')) return
@@ -266,7 +267,7 @@ export function MapStage() {
     const d = drag.current
     if (!d) return
     if (Math.abs(p.x - d.x) + Math.abs(p.y - d.y) > 3) d.moved = true
-    if (d.mode === 'pan') { setView((v) => panBy(v, p.x - d.x, p.y - d.y)); d.x = p.x; d.y = p.y }
+    if (d.mode === 'pan') { setView((v) => clampView(panBy(v, p.x - d.x, p.y - d.y))); d.x = p.x; d.y = p.y }
     else setDragBox((b) => (b ? { ...b, x1: p.x, y1: p.y } : b))
   }
   const onUp = (e: React.PointerEvent) => {
@@ -292,7 +293,7 @@ export function MapStage() {
 
   return (
     <div ref={wrap} className={`stage ${drawMode ? 'drawing' : ''}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}
-      onDoubleClick={(e) => { const p = rel(e); setView((v) => zoomAt(v, p.x, p.y, 1.8)) }}>
+      onDoubleClick={(e) => { const p = rel(e); setView((v) => clampView(zoomAt(v, p.x, p.y, 1.8))) }}>
       <canvas ref={scene} style={{ width: size.w, height: size.h }} />
       <canvas ref={parts} style={{ width: size.w, height: size.h }} className="parts" />
       {compare && !delta && (
@@ -303,10 +304,10 @@ export function MapStage() {
       {dragBox && <div className="dragbox" style={{ left: Math.min(dragBox.x0, dragBox.x1), top: Math.min(dragBox.y0, dragBox.y1), width: Math.abs(dragBox.x1 - dragBox.x0), height: Math.abs(dragBox.y1 - dragBox.y0) }} />}
       {pinXY && <div className="pin" style={{ left: pinXY.x, top: pinXY.y }}><span /></div>}
       {pin && pinXY && <PointPicker pin={pin} x={pinXY.x} y={pinXY.y} />}
-      <div className="zoom" data-ui>
+      <div className="zoom" data-ui title="Zoom">
         <button onClick={() => setView((v) => zoomAt(v, size.w / 2, size.h / 2, 1.5))} aria-label="Zoom in">+</button>
         <button onClick={() => setView((v) => zoomAt(v, size.w / 2, size.h / 2, 1 / 1.5))} aria-label="Zoom out">−</button>
-        <button onClick={() => setView(fitView(size.w, size.h))} aria-label="Fit">⌖</button>
+        <button onClick={() => setView(fitView(size.w, size.h, 6, 44))} aria-label="Show the whole model domain" title="Show the whole model domain">⤢</button>
       </div>
     </div>
   )
