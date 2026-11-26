@@ -1,3 +1,4 @@
+# Dynamics network: the shock-response head (regularised for response persistence); selected gate-first.
 seed: 17
 device: cuda
 model:
