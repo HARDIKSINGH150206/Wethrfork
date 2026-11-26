@@ -221,3 +221,26 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
   is what makes the judge's propagation check pass (D3, D34). The price is that the two routes disagree, which we state.
 - **How to answer**: "It is a control forecast plus a perturbation model, as in tangent-linear forecasting. They are not the same
   object, and here is the measured gap."
+
+### D42. Third pass on the map: a satellite-map look with a bundled, public-domain base map
+- **Decision**: the map shell now follows the layout of a satellite weather map. Supersedes the layout of D36 and D39
+  (their features stay):
+  - a logo tile and a frosted "Forecast maps" menu (Precipitation, Wind, Temperature, Moisture, Pressure) at the top left,
+    with a Universes section (fork, audit), and Difference, Swipe and Beyond-error as check rows under the active universe;
+  - round 40 px tools on the right (search, settings, info, draw a shock, speed-limit rings, show the whole domain), the
+    overlay toggles (particles, pressure lines) and zoom at the bottom right;
+  - a centred timeline capsule with 6-hourly ticks and a hover time, the legend and cursor position at the bottom left,
+    the run picker (control and universes, where a forecast-model switch would be) and a scale bar at the bottom right,
+    and the sources line at the bottom centre;
+  - frosted glass panels (`rgba(27,35,44,.625)`, 24 px blur, hairline glow), a blue accent, and labels drawn like a
+    satellite map: uppercase country names, city names over their dots, placement without overlaps.
+- **Base map**: `dashboard/public/basemap.jpg` (NASA Blue Marble, public domain, 40-126 E, 6 S-52 N, 24 px per degree,
+  419 KB) and `dashboard/public/borders.json` (Natural Earth 1:10m countries in **India's point of view**, public domain,
+  coast and land borders de-duplicated, 241 KB). Both are built once by `scripts/build_basemap.py` and committed, so the
+  dashboard still needs no network: one bundled image, not map tiles (the offline rule of `06-frontend-plan.md` holds).
+  Forecast colours are drawn semi-transparent over the imagery; rain is transparent where it is dry.
+- **Scope**: as in D36 and D39, we follow the layout and interaction pattern only. Name, logo, code, imagery and data are
+  our own or public domain. No third-party branding, fonts, code or assets are copied. Fonts are system fonts.
+- **Checks**: 16 dashboard unit tests, `npm run build`, a 13-step browser drive (layers, fork, difference, swipe, point
+  forecast, search, settings, info, timeline, collapsed menu, phone and 1280 x 720 viewports) with no console errors,
+  preflight 20 / 20 live checks including "no external hosts".

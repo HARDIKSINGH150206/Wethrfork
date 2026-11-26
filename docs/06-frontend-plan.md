@@ -1,6 +1,6 @@
 # 06. Frontend plan: the Wethrfork dashboard
 
-> **Superseded in layout (see `docs/DECISIONS.md` D36):** the shipped dashboard is a full-screen Windy-style map (layer menu, particles, isobars, timeline) with a left drawer for shocks and audit, plus Timeline Prime, Validation and About tabs. The sections below remain the feature specification.
+> **Superseded in layout (see `docs/DECISIONS.md` D36, D39 and D42):** the shipped dashboard is a full-screen satellite-style map: NASA Blue Marble base map and Natural Earth borders (India's point of view), both bundled; a frosted map menu top-left; round tools on the right; a timeline capsule at the bottom; a drawer for shocks and audit; plus Timeline Prime, Validation and About pages. The sections below remain the feature specification. The offline rule still holds: the base map is one bundled image, not tiles.
 
 Owner: P3. Stack: React 18 + Vite + TypeScript, Zustand for state, ECharts for small charts, a hand-written `<canvas>`
 grid renderer for maps. Everything bundled; works with Wi-Fi off.
