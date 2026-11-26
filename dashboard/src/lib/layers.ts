@@ -138,3 +138,10 @@ export function windAt(roll: Float32Array, tf: number, u: Float32Array, v: Float
   lerpInto(u, dayField(roll, d0, 2), dayField(roll, d1, 2), t)
   lerpInto(v, dayField(roll, d0, 3), dayField(roll, d1, 3), t)
 }
+
+/** Palette for the sensitivity overlay (values normalised to 0..1). */
+export const SENS_LAYER: LayerDef = {
+  id: 'wind', label: 'Sensitivity', lo: 0, hi: 1, warp: 'sqrt', deltaFloor: 1,
+  stops: [[0, c(180, 80, 255, 0)], [0.1, c(180, 80, 255, 0.25)], [0.4, c(230, 80, 220, 0.6)], [0.7, c(255, 150, 90, 0.82)], [1, c(255, 240, 120, 0.95)]],
+  ticks: [], fmt: (v) => v.toFixed(2), unit: () => '', disp: (v) => v,
+}
