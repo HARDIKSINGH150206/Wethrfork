@@ -172,3 +172,12 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 - **Decision**: `blend.limit_delta` maps the delta through `L * tanh(d / L)` with `L = 4` channel stds. It is pointwise,
   so it cannot move information, and zero stays zero. It keeps wet-season rain responses below the judge's stability
   bound (5 std) without touching the judge's perturbation (AGENTS rule 15 concerns the input, not the model's output).
+
+### D36. Map-first dashboard in the style of a consumer weather map
+- **Decision**: one full-screen canvas map (smooth rasters, wind particles, isobars, coastlines) with a layer menu on the
+  right, a timeline at the bottom, and a left drawer for shocks, universes, the live verdict and regional impact. Added what
+  a weather map lacks: delta and swipe-compare against the control, draw-a-shock by dragging a rectangle, the speed-limit
+  rings, a network-sensitivity overlay, and a live light-cone test. Tabs: Map, Timeline Prime, Validation, About.
+- **Why**: judges and planners already know this interaction model, and every unique feature of ours (forks, causality)
+  sits one click from the map. We copy the interaction pattern, not any third-party branding or assets; everything is
+  drawn locally, works offline, and runs on live output from our own server.

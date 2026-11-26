@@ -93,3 +93,10 @@ export const dryKerala = (last: Float32Array) => {
     }
   return s
 }
+
+/** Rectangle shock on one channel. `relative` is a fraction of the current value (physical units otherwise). */
+export function boxShock(channel: number, amount: number, relative: boolean, box: [number, number, number, number], last: Float32Array, name: string): ShockSpec {
+  const p = empty()
+  for (const [i, j] of boxCells(box[0], box[1], box[2], box[3])) p[at(channel, i, j)] = relative ? amount * last[at(channel, i, j)] : amount
+  return { name, perturbation: p, box }
+}

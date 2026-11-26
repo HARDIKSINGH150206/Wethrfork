@@ -15,6 +15,7 @@ class WindowsStore:
     def __init__(self) -> None:
         self.cfg = load_config(ROOT / "configs" / "demo.yaml")
         self.arc: Archive | None = None
+        self.clim: np.ndarray | None = None
 
     def _archive(self) -> Archive:
         if self.arc is None:
@@ -43,6 +44,9 @@ class WindowsStore:
                 "init_states": arc.data[i - 2 : i + 1].tolist(),
                 "doy_sincos": sincos_of_slot(slot),
             }
+            if self.clim is None:
+                self.clim = np.load(ROOT / "artifacts" / "climatology.npy")
+            d["clim"] = self.clim[[(slot + k) % 366 for k in range(1, steps + 1)]].tolist()
             if w.get("truth"):
                 d["truth"] = arc.data[i + 1 : i + 1 + steps].astype(np.float32).tolist()
             return d
