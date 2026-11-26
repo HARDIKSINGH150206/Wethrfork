@@ -1,5 +1,4 @@
-"""Wethrfork inference package. Scanned by the judge: keep free of dates, plotting, external URLs.
+"""Wethrfork: a weather model with a speed limit."""
 
-STUB: implement during the hackathon. Spec: docs/14-folder-structure.md.
-Rules: see AGENTS.md section 1 (no date literals, no route string outside serve.py).
-"""
+__version__ = "0.1.0"
+MODEL_NAME = "wethrfork-v0.1-speedlimit"
