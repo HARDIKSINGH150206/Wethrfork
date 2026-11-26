@@ -1,5 +1,5 @@
 {
- "model_name": "wethrfork-v1.0-speedlimit",
+ "model_name": "wethrfork-v1.1-speedlimit",
  "files": {
   "nn.pt": {
    "sha256": "cd0849184cd092c98cdb80da62aa33a60e37f32558658411f2ae11bb88ed993a",
@@ -10,7 +10,7 @@
    "bytes": 77
   },
   "nn_dyn.pt": {
-   "sha256": "0afefa9042a84295754965bc360997ecc46431efd39c5afeef81bc394e1f43aa",
+   "sha256": "a6e43a00b49ff3aeeb39963d43f0572fc069e08374f37058dee9d07c0cab5d1d",
    "bytes": 1574861
   },
   "nn_dyn_config.json": {
