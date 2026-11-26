@@ -3,9 +3,11 @@ import { LAT_MAX, LAT_MIN, LON_MAX, LON_MIN } from './interp'
 /** Equirectangular view: `scale` pixels per degree, centred on (cx lon, cy lat). */
 export interface View { scale: number; cx: number; cy: number; w: number; h: number }
 
-export function fitView(w: number, h: number, pad = 0.0): View {
-  const s = Math.min((w * (1 - pad)) / (LON_MAX - LON_MIN), (h * (1 - pad)) / (LAT_MAX - LAT_MIN))
-  return { scale: s, cx: (LON_MIN + LON_MAX) / 2, cy: (LAT_MIN + LAT_MAX) / 2, w, h }
+/** Fit the whole model domain into the free area (room is left at the bottom for the timeline bar). */
+export function fitView(w: number, h: number, top = 6, bottom = 104): View {
+  const s = Math.min(w / (LON_MAX - LON_MIN), Math.max(h - top - bottom, 100) / (LAT_MAX - LAT_MIN))
+  const latC = (LAT_MIN + LAT_MAX) / 2
+  return { scale: s, cx: (LON_MIN + LON_MAX) / 2, cy: latC - (bottom - top) / 2 / s, w, h }
 }
 export const projX = (v: View, lon: number) => v.w / 2 + (lon - v.cx) * v.scale
 export const projY = (v: View, lat: number) => v.h / 2 - (lat - v.cy) * v.scale
