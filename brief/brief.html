@@ -44,9 +44,9 @@
   <h1>Wethrfork <small>a weather model with a speed limit &middot; Yugaantar DevForge, Track 2 &ldquo;Multiverse of Monsoon&rdquo;</small></h1>
   <div class="byline">Team Return0; &middot; github.com/HARDIKSINGH150206/Wethrfork &middot; model <code>wethrfork-v1.1-speedlimit</code></div>
 
-  <div class="usp"><b>USP.</b> Wethrfork is a Climate Digital Twin of India whose shock responses are <b>causal by construction</b>: the network
-  cannot move a change more than 8 grid cells (about 900 km) per simulated day, so a shock stays local, then spreads outward at a bounded speed.
-  On held-out data it beats both persistence and climatology, and every shock is audited live with the organisers' own causality checks.</div>
+  <div class="usp"><b>USP.</b> Wethrfork is a <b>hybrid forecasting system</b> for India: a calibrated forecast plus a separate dynamics network that answers &ldquo;what if&rdquo; shocks.
+  Its daily update can move a change at most 8 grid cells along either axis (about 900 km), a bound our tests check, so a shock stays local and spreads at a bounded speed.
+  On held-out data it beats persistence and climatology, and every shock is audited live with the organisers' own checks. Responses are learned, not validated physics; limits are measured and stated.</div>
 
   <h2>Model design and architecture</h2>
   <div class="flow">
@@ -63,13 +63,13 @@
   <p>Served formula: <code>out = clamp( PP(Blend(skill)) + limit[ D(shocked) &minus; D(base) ] )</code>. A control forecast plus a perturbation model, as in
   tangent-linear forecasting. Both networks share one architecture (about 0.39 M parameters each, CPU, deterministic). Each step is
   <i>residual on the last day</i>: a semi-Lagrangian advection step whose displacement vector is capped at 4 cells/day with a smooth <code>tanh</code>,
-  then three 3&times;3 convolutions (reach 3) with replicate padding. No attention, pooling, spatial normalisation, FFT or U-Net, so nothing can reach
-  further than 4 (advection) + 1 (bilinear) + 3 (convolutions) = <b>8 cells per step</b>. A zero shock skips the shocked run, so the output is bit-identical to the unshocked call.</p>
+  then three 3&times;3 convolutions (reach 3) with replicate padding. No attention, pooling, spatial normalisation, FFT or U-Net, so the update reaches
+  at most 4 (advection) + 1 (bilinear) + 3 (convolutions) = <b>8 cells per step along either axis</b>. A zero shock skips the shocked run, so the output is bit-identical to the unshocked call.</p>
 
   <h2>Contract table: criterion, guarantee, evidence (2021, held out; calibration fitted on 2020)</h2>
   <table>
-    <tr><th style="width:21%">Judge criterion</th><th style="width:36%">Architectural guarantee</th><th>Measured evidence</th></tr>
-    <tr><td>Shock local on day 1, then spreads, never teleports</td><td>Reach &le; 8 cells/step (Chebyshev); light-cone unit test; pointwise response limiter</td>
+    <tr><th style="width:21%">Judge criterion</th><th style="width:36%">Design property</th><th>Measured evidence</th></tr>
+    <tr><td>Shock local on day 1, then spreads, never teleports</td><td>Reach &le; 8 cells/step along either axis (&le; 9.7 diagonal), tested; pointwise response limiter</td>
         <td>4 seasons &times; 2 official shocks all pass a gate stricter than the judge&rsquo;s: near fraction &ge; 0.99, growth 20&ndash;3400&times;, far fraction 0.000, max |z| &le; 3.8. Swept over all 71 held-out windows: full causality marks (15/15) in every one</td></tr>
     <tr><td>Zero shock changes nothing</td><td>Deterministic server; shocked run skipped for a null shock</td><td>Max difference <b>0.0</b> in every season and in an offline, read-only, 4-CPU container</td></tr>
     <tr><td>Valid outputs</td><td>Clamp applied after the delta: rain &ge; 0, 234&ndash;332 K</td><td>100% valid and 99.5% causal over 200 fuzz shocks (random box/Gaussian, 6 channels, 0.5&ndash;8 std); 40 malformed or extreme API requests tested</td></tr>
@@ -95,7 +95,7 @@
   <h2>Failure modes (what we know does not work)</h2>
   <ul>
     <li><b>Jet transport.</b> The Arabian Sea low-level jet blows at 12&ndash;15 m/s (10&ndash;13 cells/day), faster than our 4-cell advection cap; jet-driven transport is under-represented.</li>
-    <li><b>Responses are learned dynamics, not validated physics.</b> Timing and locality are guaranteed; sign and size are not. Natural experiment (60 warm, moist Bay days): rain response has the same sign as the observed composite (r = 0.31); pressure does not match (r &asymp; 0). Example: a monsoon-stall shock first dries the west coast (days 1&ndash;2), then raises rain from day 4, the same sequence seen after naturally weak Arabian Sea flow in the data (a break-then-revival cycle): a learned correlation, not a proven intervention effect, and about twice the observed size by day 8.</li>
+    <li><b>Responses are learned dynamics, not validated physics.</b> Locality is bounded by design and tested; sign and size are learned. A shock sent through the API is not the same as editing the input day and forecasting normally (the forecast stays that of the unshocked state): over 71 held-out windows the largest rainfall gap is a median 14.5 mm/day for the warm Bay shock, up to 105. Natural experiment (60 warm, moist Bay days): rain response has the same sign as the observed composite (r = 0.31); pressure does not match (r &asymp; 0). Example: a monsoon-stall shock first dries the west coast (days 1&ndash;2), then raises rain from day 4, the same sequence seen after naturally weak Arabian Sea flow in the data (a break-then-revival cycle): a learned correlation, not a proven intervention effect, and about twice the observed size by day 8.</li>
     <li><b>Extremes.</b> The official warm_ocean shock is about 11.8&sigma; of local variability (out of distribution); it passes; the weakest fuzz categories are rain shocks (94%) and 40%-of-current-value shocks (96%).</li>
     <li><b>Grid and edges.</b> 1&deg; daily fields cannot hold a cyclone core; energy that leaves the domain is lost, so shocks at the edge propagate less.</li>
   </ul>

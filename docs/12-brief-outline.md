@@ -11,8 +11,8 @@ technical approach. Sources: `brief/brief.md` (or `brief/brief.typ`), figures in
 
 **Title block** (2 lines): Wethrfork, the monsoon toolkit · team name · repo URL.
 
-**USP (2 sentences)**: Wethrfork is a Climate Digital Twin of India whose shock responses are causal by construction:
-no change can travel more than 8 grid cells (about 900 km) per simulated day. It forecasts beyond both persistence and
+**USP (2 sentences)**: Wethrfork is a Climate Digital Twin of India whose shock responses are locally bounded by design:
+the network cannot move a change more than 8 grid cells along either axis (about 900 km) per simulated day. It forecasts beyond both persistence and
 climatology on held-out data and audits every shock live with the organizers' own causality checks.
 
 **Panel A: architecture (small diagram, about 1/4 page)**

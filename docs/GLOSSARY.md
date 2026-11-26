@@ -33,7 +33,7 @@
 | sigma_err | Per-cell forecast RMSE by lead (2021), used for stippling and probabilities |
 | Skill head | Blend + post-processor; produces the scored forecast |
 | Skill score (SS) | `1 - RMSE_model / min(RMSE_persistence, RMSE_climatology)` |
-| Speed limit | Our guarantee: no change travels more than 8 cells (~900 km) per simulated day |
+| Speed limit | Our design bound, checked by unit tests: the network's daily update moves information at most 8 cells along either axis (~900 km; up to 9.7 cells diagonally) |
 | Stippling | Dots on cells where the delta exceeds typical forecast error |
 | Timeline Prime | The unshocked forecast (track terminology) |
 | Universe | One branch in the fork tree |

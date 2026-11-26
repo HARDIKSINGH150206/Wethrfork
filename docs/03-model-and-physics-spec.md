@@ -23,7 +23,7 @@ if perturbation is None or all zeros: D = 0 exactly (the shocked run is skipped)
 - **Skill head** (`F_skill`): the most accurate forecast we can make for the unshocked state. It blends a per-cell ridge
   regression with the neural network per lead day and channel, then applies a post-processor (damping toward
   climatology at long leads, rain quantile mapping).
-- **Dynamics head** (`D`): the network alone. It is local by construction, so a shock stays near where it was applied
+- **Dynamics head** (`D`): the network alone. Its update is local by design (bounded reach, tested), so a shock stays near where it was applied
   and spreads at a bounded speed.
 - **Why split them**: blending with a per-cell ridge model and damping toward climatology both improve RMSE, but they
   shrink and trap shock energy, which can fail the judge's "spreads outward" check. Splitting keeps both properties.
