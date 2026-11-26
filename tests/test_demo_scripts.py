@@ -12,7 +12,7 @@ def test_demo_script_is_executable_shell_and_not_a_stub():
     sh = ROOT / "scripts" / "demo.sh"
     txt = sh.read_text()
     assert "STUB" not in txt
-    for needle in ("serve.py", "lab.lab_server", "vite preview", "preflight.py --live", "xdg-open"):
+    for needle in ("serve.py", "lab.lab_server", "vite preview", "preflight.py --live", "xdg-open", "setsid", "wait_for_ok", "cd dashboard"):
         assert needle in txt, needle
     assert subprocess.run(["bash", "-n", str(sh)], check=False).returncode == 0
 

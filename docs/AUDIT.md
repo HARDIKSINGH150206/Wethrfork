@@ -64,8 +64,13 @@ data. Everything below was run on the final artifacts (`wethrfork-v1.1-speedlimi
 | Preflight (`scripts/preflight.py`) | 13 / 13 static checks, live checks pass |
 | Judge-like container from a fresh clone (no network, read-only, 4 CPUs, 6 GB) | see 3.3 |
 
-### 3.3 Judge-like container
-Run after the final push on a fresh clone of `main`; the result is appended in section 7.
+### 3.3 Judge-like container and demo launcher
+- **Judge-like container** (fresh clone of the final `main` from GitHub, no network, read-only mount, 4 CPUs, 6 GB): ready in 3.0 s;
+  no shock, warm_ocean and zeros all valid; warm_ocean 0.21 s wall; **null versus no shock: max difference 0.0**.
+- **Demo launcher** (`bash scripts/demo.sh`), cold start from nothing: 11 s to a running dashboard, 13/13 static and 20/20 live checks,
+  exits 0 with the three services still running, `demo.sh stop` frees all ports. Testing it found three launcher bugs, all fixed:
+  it hung because the dashboard process kept the script's output pipe open; Vite answered 404 because `npm --prefix` does not change
+  the working directory; and the readiness check accepted any HTTP answer, so it now requires 200.
 
 ## 4. Dataset: was it fitted before use?
 
