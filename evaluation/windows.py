@@ -1,4 +1,5 @@
 """Build init/truth windows from configs/eval.yaml (dates live in YAML, never here)."""
+
 from __future__ import annotations
 
 import numpy as np
