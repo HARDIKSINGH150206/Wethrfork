@@ -1,0 +1,11 @@
+# All dates for the project live in configs/*.yaml, never in .py files.
+data_path: data/india_climate_train.nc
+stats_path: data/stats.json
+cache_path: data/cache.npz
+splits:
+  train: ["2005-01-01", "2019-12-31"]   # network + ridge training
+  calib: ["2020-01-01", "2020-12-31"]   # ridge lambda, blend, damping, rain map, checkpoint selection
+  grade: ["2021-01-01", "2021-12-31"]   # out-of-sample self-grade, sigma_err
+climatology:
+  years: ["2005-01-01", "2021-12-31"]   # kit method over the full archive (matches the judge reference)
+  smooth_days: 15

@@ -1,0 +1,11 @@
+fit_split: calib            # 2020
+grade_split: grade          # 2021
+ship_refit_splits: [calib, grade]
+blend_grid_step: 0.05
+damping:
+  min_variance_ratio: 0.5
+  clip: [0.3, 1.0]
+rain:
+  quantiles: 41
+  land_ocean_split: true
+  bias_target_by_lead: [1.15, 1.12, 1.09, 1.06, 1.03, 1.00, 0.97, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95]

@@ -1,0 +1,23 @@
+# Validation windows. Dates are the LAST input day. Candidates from memory of real events: verify each in the data.
+systematic:
+  start: "2021-01-03"
+  end: "2021-12-21"
+  every_days: 5
+typed:
+  - {type: monsoon_onset, last_input_day: "2021-06-01"}
+  - {type: heavy_rain,    last_input_day: "2021-07-17"}
+  - {type: heatwave,      last_input_day: "2020-05-22"}
+  - {type: cyclone,       last_input_day: "2021-05-14"}   # Tauktae (Arabian Sea)
+  - {type: cyclone_alt,   last_input_day: "2020-05-16"}   # Amphan (Bay of Bengal)
+  - {type: winter_disturbance, last_input_day: "2021-02-01"}
+shock_windows:
+  DJF:  "2021-01-15"
+  MAM:  "2021-04-15"
+  JJAS: "2021-07-15"
+  ON:   "2021-10-15"
+gate:
+  near_frac_min: 0.75
+  growth_min: 3.0
+  far_frac_max: 0.01
+  max_z: 4.0
+steps: 10

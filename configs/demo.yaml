@@ -1,0 +1,6 @@
+# Demo start windows read by the lab server from data/india_climate_train.nc (never shipped in the repo).
+windows:
+  - {id: w01, label: "Monsoon active spell (held out)", last_input_day: "2021-07-15", truth: true}
+  - {id: w02, label: "Pre-monsoon heat (held out)",    last_input_day: "2021-05-01", truth: true}
+  - {id: w03, label: "Post-monsoon Bay activity",       last_input_day: "2021-10-20", truth: true}
+  - {id: w04, label: "Winter",                          last_input_day: "2021-01-20", truth: true}

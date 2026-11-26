@@ -1,0 +1,4 @@
+leads: 14
+lambdas: [0.1, 1.0, 10.0, 100.0]
+features: [last3_anomalies, doy_sincos_target, bias]
+out: artifacts/ridge.pt

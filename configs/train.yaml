@@ -1,0 +1,27 @@
+seed: 17
+device: cuda
+model:
+  hidden: 128
+  conv_blocks: 3            # never above 3 (speed limit)
+  displacement_cap: 4.0     # cells/day, never above 4.0
+  alpha_init: 0.5
+  advect_channels: [t2m, tp, u10, v10, msl, tcwv]
+optim:
+  lr: 1.0e-3
+  lr_min: 1.0e-5
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  batch_size: 32
+  amp: bf16
+loss:
+  channel_weights: {t2m: 1.0, tp: 1.0, u10: 1.0, v10: 1.0, msl: 1.0, tcwv: 1.0}
+  heavy_rain_mm: 10.0
+  heavy_rain_weight: 3.0
+curriculum:
+  - {unroll: 1, epochs: 15, input_noise: 0.0}
+  - {unroll: 4, epochs: 10, input_noise: 0.05}
+  - {unroll: 8, epochs: 8, input_noise: 0.05, shock_augment_prob: 0.2}
+select:
+  metric: selfgrade_mean_ss_calib
+  require_gate: true
+out_dir: runs/nn

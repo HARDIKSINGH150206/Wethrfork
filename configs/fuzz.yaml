@@ -1,0 +1,11 @@
+seed: 7
+n_shocks: 60
+channels: [t2m, tp, u10, v10, msl, tcwv]
+shapes: [box, gaussian]
+box_size_cells: [3, 12]
+amplitude_std: [0.5, 1, 2, 4, 8]
+relative_options: [0.2, 0.4, 0.8]     # fraction of current value for winds and moisture
+windows_from: shock_windows           # configs/eval.yaml
+include_edge_boxes: true
+include_dry_blend_wet_nn: true
+out_dir: runs/fuzz
