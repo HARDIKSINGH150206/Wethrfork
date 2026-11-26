@@ -25,3 +25,8 @@ select:
   metric: selfgrade_mean_ss_calib
   require_gate: true
 out_dir: runs/nn
+# Checkpoint selection windows (calibration year, never the grading year): last input day per season.
+select_windows:
+  systematic: {start: "2020-01-03", end: "2020-12-20", every_days: 6}
+  shock: {DJF: "2020-01-15", MAM: "2020-04-15", JJAS: "2020-07-15", "ON": "2020-10-15"}
+lr_scale_by_stage: [1.0, 0.5, 0.3]
