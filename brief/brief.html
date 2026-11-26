@@ -156,7 +156,7 @@
   <h2>Engineering</h2>
   <ul>
     <li>Offline, CPU-only, deterministic; artifacts (about 21 MB) are in the repo and hash-checked. Verified from a clean clone in a no-network, read-only, 4-CPU, 6 GB container.</li>
-    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 79 tests (including 40 API edge cases) and the official repo scan.</li>
+    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 78 tests (including 40 API edge cases) and the official repo scan.</li>
     <li>Honest limits: day-8 skill is about climatology; pressure response unvalidated; impact cards show mean change, not probabilities.</li>
   </ul>
   <div class="foot">Wethrfork v1.1 &middot; related work: semi-Lagrangian advection in learned weather models (Learning to Advect); tangent-linear perturbation forecasting.</div>

@@ -42,7 +42,7 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 ## Engineering
 | Check | Value |
 | --- | --- |
-| Tests | 79 pass (includes 40 HTTP edge cases: malformed bodies, wrong shapes, NaN/Inf, 1e30 values, odd steps, Feb 29 / Dec 31) |
+| Tests | 78 pass (includes 40 HTTP edge cases: malformed bodies, wrong shapes, NaN/Inf, 1e30 values, odd steps, Feb 29 / Dec 31) |
 | Malformed requests | clean 400/422 JSON errors (were 500 before this round) |
 | Latency, 10 steps shocked | about 0.18 s wall with JSON; 8 concurrent shocked calls all succeed |
 | Fuzz | 200 random shocks: validity 100%, causality 99.5% (rain shocks 94%, 40%-relative shocks 96% are the weakest) |
