@@ -38,8 +38,10 @@ def main() -> None:
     slots = arc.slots()
     anom = arc.data - eng.clim[slots]
     box_t2m = anom[:, 0][:, m].mean(axis=1)
-    thr = box_t2m.mean() + 1.0 * box_t2m.std()
-    cand = [t for t in np.where(box_t2m > thr)[0] if 2 <= t < len(slots) - 6]
+    box_q = anom[:, 5][:, m].mean(axis=1)  # moisture anomaly: the shock adds heat AND moisture, so the events must too
+    thr = box_t2m.mean() + 0.7 * box_t2m.std()
+    thr_q = box_q.mean() + 0.7 * box_q.std()
+    cand = [t for t in np.where((box_t2m > thr) & (box_q > thr_q))[0] if 2 <= t < len(slots) - 6]
     events: list[int] = []
     for t in cand:  # keep events at least 5 days apart
         if not events or t - events[-1] >= 5:
