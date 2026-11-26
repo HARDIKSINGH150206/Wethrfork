@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Wethrfork: a weather model with a speed limit</title>
+<style>
+  @page { size: A4; margin: 11mm 12mm; }
+  :root { --ink:#16202b; --dim:#5b6b7c; --acc:#0b6fa4; --line:#cdd6df; --bg2:#f3f6f9; --ok:#177a45; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  html { font-family: "Noto Sans", "DejaVu Sans", Arial, sans-serif; color: var(--ink); font-size: 8.1pt; line-height: 1.32; }
+  body { margin: 0; }
+  .page { height: 273mm; overflow: hidden; page-break-after: always; break-after: page; position: relative; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  h1 { font-size: 17pt; margin: 0; letter-spacing: .01em; }
+  h1 small { font-size: 8.5pt; font-weight: 400; color: var(--dim); margin-left: 6px; }
+  .byline { color: var(--dim); font-size: 7.6pt; margin: 1px 0 5px; }
+  h2 { font-size: 9pt; margin: 7px 0 3px; color: var(--acc); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+  p { margin: 2px 0 4px; }
+  ul { margin: 2px 0 3px 13px; padding: 0; } li { margin: 1px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 7.4pt; }
+  th, td { border: 1px solid var(--line); padding: 2px 4px; vertical-align: top; text-align: left; }
+  th { background: var(--bg2); }
+  .usp { background: var(--bg2); border-left: 3px solid var(--acc); padding: 4px 7px; margin: 3px 0 4px; }
+  .flow { display: flex; align-items: stretch; gap: 4px; font-size: 7pt; margin: 3px 0; }
+  .box { border: 1px solid var(--acc); border-radius: 3px; padding: 3px 4px; background: #fff; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+  .box.dim { border-color: var(--line); color: var(--dim); }
+  .col { display: flex; flex-direction: column; gap: 3px; flex: 1.5; }
+  .arrow { align-self: center; color: var(--acc); font-weight: 700; }
+  .cols { display: flex; gap: 8px; } .cols > div { flex: 1; min-width: 0; }
+  figure { margin: 2px 0 3px; } figure img { width: 100%; display: block; border: 1px solid var(--line); }
+  figcaption { font-size: 6.8pt; color: var(--dim); margin-top: 1px; }
+  .ok { color: var(--ok); font-weight: 700; } .bad { color: var(--bad); font-weight: 700; }
+  .foot { position: absolute; bottom: 0; left: 0; right: 0; font-size: 6.6pt; color: var(--dim); border-top: 1px solid var(--line); padding-top: 2px; }
+  .shot img { width: 66%; margin: 0 auto; }
+  .small img { height: 29mm; width: auto; max-width: 100%; margin: 0 auto; }
+  .nat img { height: 44mm; width: auto; max-width: 100%; margin: 0 auto; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 7.2pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================== PAGE 1 ============================== -->
+<section class="page">
+  <h1>Wethrfork <small>a weather model with a speed limit &middot; Yugaantar DevForge, Track 2 &ldquo;Multiverse of Monsoon&rdquo;</small></h1>
+  <div class="byline">Team Wethrfork &middot; github.com/HARDIKSINGH150206/Wethrfork &middot; model <code>wethrfork-v1.0-speedlimit</code></div>
+
+  <div class="usp"><b>USP.</b> Wethrfork is a Climate Digital Twin of India whose shock responses are <b>causal by construction</b>: the network
+  cannot move a change more than 8 grid cells (about 900 km) per simulated day, so a shock stays local, then spreads outward at a bounded speed.
+  On held-out data it beats both persistence and climatology, and every shock is audited live with the organisers' own causality checks.</div>
+
+  <h2>Model design and architecture</h2>
+  <div class="flow">
+    <div class="box dim">3 days &times; 6 channels<br>(physical units)</div><div class="arrow">&rarr;</div>
+    <div class="box dim">anomalies vs 366-day climatology; log rain</div><div class="arrow">&rarr;</div>
+    <div class="col">
+      <div class="box"><b>Skill network</b>: advection (&le;4 cells/day) + local 3&times;3 CNN</div>
+      <div class="box"><b>Ridge</b>: one linear model per cell and lead</div>
+    </div><div class="arrow">&rarr;</div>
+    <div class="box">per-lead <b>blend</b> &rarr; damping &rarr; rain post-processor</div><div class="arrow">+</div>
+    <div class="box"><b>Shock delta</b><br>dynamics network(shocked) &minus; network(base), saturated</div><div class="arrow">&rarr;</div>
+    <div class="box">final clamp</div>
+  </div>
+  <p>Served formula: <code>out = clamp( PP(Blend(skill)) + limit[ D(shocked) &minus; D(base) ] )</code>. A control forecast plus a perturbation model, as in
+  tangent-linear forecasting. Both networks share one architecture (about 0.39 M parameters each, CPU, deterministic). Each step is
+  <i>residual on the last day</i>: a semi-Lagrangian advection step whose displacement vector is capped at 4 cells/day with a smooth <code>tanh</code>,
+  then three 3&times;3 convolutions (reach 3) with replicate padding. No attention, pooling, spatial normalisation, FFT or U-Net, so nothing can reach
+  further than 4 (advection) + 1 (bilinear) + 3 (convolutions) = <b>8 cells per step</b>. A zero shock skips the shocked run, so the output is bit-identical to the unshocked call.</p>
+
+  <h2>Contract table: criterion, guarantee, evidence (2021, held out; calibration fitted on 2020)</h2>
+  <table>
+    <tr><th style="width:21%">Judge criterion</th><th style="width:36%">Architectural guarantee</th><th>Measured evidence</th></tr>
+    <tr><td>Shock local on day 1, then spreads, never teleports</td><td>Reach &le; 8 cells/step (Chebyshev); light-cone unit test; pointwise response limiter</td>
+        <td>4 seasons &times; 2 official shocks all pass a gate stricter than the judge&rsquo;s: near fraction &ge; 0.99, growth 12&ndash;464&times;, far fraction 0.000, max |z| &le; 3.7</td></tr>
+    <tr><td>Zero shock changes nothing</td><td>Deterministic server; shocked run skipped for a null shock</td><td>Max difference <b>0.0</b> in every season and in an offline, read-only, 4-CPU container</td></tr>
+    <tr><td>Valid outputs</td><td>Clamp applied after the delta: rain &ge; 0, 234&ndash;332 K</td><td>100% valid over 60 fuzz shocks (random box/Gaussian, 6 channels, 0.5&ndash;8 std)</td></tr>
+    <tr><td>Beat persistence and climatology</td><td>Ridge + network blend per lead and channel; damping toward climatology</td>
+        <td>Mean RMSE skill <b>0.134</b> over 71 windows (day 1: 0.22, day 4: 0.04, day 8: &minus;0.01)</td></tr>
+    <tr><td>Heavy rain (&ge; 10 mm/day)</td><td>Log-space rain, wet-cell loss weight, per-lead rain scale tuned on the per-window score</td><td>CSI skill 0.075 (day 1: 0.09, day 4: 0.02)</td></tr>
+    <tr><td>No blur</td><td>Residual dynamics; no variance-shrinking loss</td><td>Day-8 variance ratio 1.01 / 0.68 / 0.71 / 0.78 / 0.85 / 0.91 (t2m, tp, u10, v10, msl, tcwv)</td></tr>
+    <tr><td>Fast, offline</td><td>CPU, 4 threads, artifacts inside the repo, SHA-256 checked at start-up</td><td>10-step shocked call 0.18 s with JSON; ready in 3 s; repo scan 15/15</td></tr>
+  </table>
+
+  <h2>Drift and blur</h2>
+  <div class="cols">
+    <div>
+      <p><b>Drift.</b> The network is trained on a curriculum of 1, 4 and 8 unrolled days with input noise, so it learns from its own errors. Beyond a week
+      the atmosphere is chaotic: the skill head is then about as good as climatology (day-8 skill &minus;0.01) and we say so instead of hiding it.</p>
+      <p><b>Blur.</b> MSE-trained models smooth rain. We keep rain in log space, weight wet cells 3&times;, and tune the rain post-processor on a per-window
+      score that penalises both false drizzle and missed events. An earlier quantile-matching version looked better on pooled error but inflated rain variance
+      and cost about 0.05 of mean skill, so we dropped it.</p>
+    </div>
+    <div><figure><img src="figures/leads.png" alt="skill by lead and day-8 variance ratio"/><figcaption>Held-out 2021: RMSE skill by lead and channel (left); day-8 variance ratio, dashed line = judge floor 0.4 (right).</figcaption></figure></div>
+  </div>
+
+  <h2>Failure modes (what we know does not work)</h2>
+  <ul>
+    <li><b>Jet transport.</b> The Arabian Sea low-level jet blows at 12&ndash;15 m/s (10&ndash;13 cells/day), faster than our 4-cell advection cap; jet-driven transport is under-represented.</li>
+    <li><b>Responses are learned dynamics, not validated physics.</b> Timing and locality are guaranteed; sign and size are not. Natural experiment (60 warm, moist Bay days): rain response has the same sign as the observed composite (r = 0.28); pressure does not match (r &asymp; 0).</li>
+    <li><b>Extremes.</b> The official warm_ocean shock is about 11.8&sigma; of local variability (out of distribution); it passes, but fuzz causality is lower for wind shocks (u10 92%, v10 86%) and for 40%-of-current-value wind or moisture shocks.</li>
+    <li><b>Grid and edges.</b> 1&deg; daily fields cannot hold a cyclone core; energy that leaves the domain is lost, so shocks at the edge propagate less.</li>
+  </ul>
+
+  <div class="foot">Data: modified ERA5 reanalysis (Hersbach et al. 2020), Copernicus Climate Change Service, via Google WeatherBench 2 (CC BY 4.0). Everything built during the event; no lookup of past weather; calibration files are statistics with no dates.</div>
+</section>
+
+<!-- ============================== PAGE 2 ============================== -->
+<section class="page">
+  <h1>A multiverse you can trust <small>visualisation and impact use case</small></h1>
+  <div class="byline">Live from our own forecast server: nothing is pre-rendered, and it works with Wi-Fi off.</div>
+
+  <h2>Dashboard: fork a universe, see the speed limit, check the verdict</h2>
+  <figure class="shot"><img src="figures/dashboard.png" alt="Wethrfork dashboard fork view"/>
+  <figcaption>Fork view on a held-out monsoon window: warm Bay of Bengal (+3 K and +15% moisture), column water vapour, day +4. Control, shocked and delta maps;
+  white box = shock; dashed rings = the judge&rsquo;s radius (3 + 8&middot;day) and our hard reach (8&middot;day). Bottom left: the official causality checks run live on any shock;
+  the out-of-distribution meter flags extrapolation. Bottom right: regional impact.</figcaption></figure>
+  <ul>
+    <li><b>Shock composer</b>: the two official shocks, a cyclone vortex (gradient-wind balance), heat dome, dry Kerala and a custom Gaussian on any channel. Every fork is kept and compared against the control.</li>
+    <li><b>Limits verdict</b>: non-zero, localised, propagates, stable, plus an out-of-distribution meter; a judge&rsquo;s new shock is answered in about 0.3 s.</li>
+  </ul>
+
+  <div class="cols">
+    <div>
+      <h2>Impact use case: a state disaster officer</h2>
+      <p>Question: <i>if the Bay of Bengal runs warm, where does the monsoon rain shift in the next four days?</i> Same held-out window, warm Bay shock,
+      land cells only, day +4 (model output, not a verified forecast of a real event):</p>
+      <table>
+        <tr><th>Region</th><th>Control rain</th><th>Warm-Bay rain</th><th>&Delta;T</th></tr>
+        <tr><td>Odisha</td><td>5.4 mm/day</td><td>12.8 mm/day</td><td>&minus;0.62 K</td></tr>
+        <tr><td>Andhra Pradesh</td><td>10.2</td><td>15.6</td><td>&minus;0.29 K</td></tr>
+        <tr><td>West Bengal</td><td>13.2</td><td>17.0</td><td>&minus;0.33 K</td></tr>
+        <tr><td>Bihar</td><td>14.2</td><td>16.1</td><td>&minus;0.26 K</td></tr>
+      </table>
+      <p>The shift is largest next to the shock and fades with distance; the officer can fork further shocks (monsoon stall, heat dome) and compare in seconds.
+      Cells are 1&deg; (about 110 km); the forecast error maps (<code>sigma_err</code>) are measured on held-out 2021 and shipped for the dashboard.
+      <b>Not built:</b> probability-of-exceedance cards and crop-stress indices.</p>
+    </div>
+    <div>
+      <h2>Natural-experiment check</h2>
+      <figure class="nat"><img src="figures/natural.png" alt="observed composite versus model response"/>
+      <figcaption>Day-2 rain (top) and pressure (bottom): observed anomaly after warm, moist Bay days (left) versus the model&rsquo;s warm_ocean response (right). Each panel has its own symmetric colour scale. We show it because it only partly agrees.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>Why the speed limit is real</h2>
+      <figure class="small"><img src="figures/lightcone.png" alt="measured reach versus speed limit"/>
+      <figcaption>Light-cone test: a one-cell change measured after 1&ndash;4 steps never exceeds 8 cells per step.</figcaption></figure>
+    </div>
+    <div>
+      <h2>Stress test</h2>
+      <figure class="small"><img src="figures/fuzz.png" alt="fuzz causality pass rate by channel and amplitude"/>
+      <figcaption>60 random shocks: 100% valid, 95% causal. White = combination not sampled.</figcaption></figure>
+    </div>
+  </div>
+
+  <h2>Engineering</h2>
+  <ul>
+    <li>Offline, CPU-only, deterministic; artifacts (about 21 MB) are in the repo and hash-checked. Verified from a clean clone in a no-network, read-only, 4-CPU, 6 GB container.</li>
+    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 37 tests and the official repo scan.</li>
+    <li>Honest limits: day-8 skill is about climatology; pressure response unvalidated; impact cards show mean change, not probabilities.</li>
+  </ul>
+  <div class="foot">Wethrfork v1.0 &middot; related work: semi-Lagrangian advection in learned weather models (Learning to Advect); tangent-linear perturbation forecasting.</div>
+</section>
+</body>
+</html>
