@@ -389,13 +389,14 @@ The rain response agrees with reality; the pressure response does not, and we re
 ## Testing and quality gates
 
 ```mermaid
-flowchart LR
-    subgraph CI["Every push (GitHub Actions)"]
-        U["125 pytest<br/>unit and contract tests"] --- K["Judge-contract tests<br/>read-only copy, kit blocked,<br/>kit schema validator"]
-        R["ruff"] --- DB["Dashboard<br/>vitest, type-check, build"]
+flowchart TB
+    subgraph CI["Every push: GitHub Actions"]
+        direction LR
+        R["ruff lint"] --> U["125 pytest<br/>unit, contract and<br/>judge-contract tests"] --> DB["Dashboard<br/>vitest, type-check, build"]
     end
     subgraph REL["Before every tag: make release-check"]
-        SC["Repo scan 15/15"] --> G["Causality gate<br/>4 seasons"] --> SW["Sweep<br/>71 windows"] --> F["Fuzz"] --> SG["Self-grade"] --> RH["Judge rehearsal<br/>Docker, 120 calls"]
+        direction LR
+        SC["Repo scan<br/>15 / 15"] --> G["Causality gate and<br/>71-window sweep"] --> F["Fuzz and<br/>self-grade"] --> RH["Judge rehearsal<br/>Docker, 120 calls"]
     end
     CI --> REL
 ```
