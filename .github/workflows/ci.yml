@@ -35,6 +35,7 @@ jobs:
         with: { node-version: "20" }
       - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - run: pip install -r requirements-dev.txt -r requirements-e2e.txt
+      - run: pip install ./vendor/monsoon_r1_kit-1.0.0-py3-none-any.whl   # the lab's live verdict uses the kit's checks
       - run: python -m playwright install --with-deps chromium
       - run: npm ci && npm run build
         working-directory: dashboard
