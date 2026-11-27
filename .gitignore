@@ -13,3 +13,4 @@ node_modules/
 dashboard/dist/
 .DS_Store
 .ipynb_checkpoints/
+e2e-artifacts/

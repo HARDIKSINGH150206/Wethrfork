@@ -14,12 +14,14 @@ Steps (thresholds: configs/rehearsal.yaml, configs/eval.yaml gate):
   selfgrade    held-out 2021 through the engine: valid, full RMSE points, CSI floor, day-8 variance band
   rehearsal    the judge's procedure in a judge-like container (evaluation/judge_rehearsal.py)
   dashboard    vitest and the production build (type-check)
+  browser      the dashboard in a real browser (e2e/, Playwright), no dataset needed
 Exit 0 only when every step passes. A skipped step is not a pass (exit 2). Report: runs/release_check/report.json
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import shutil
 import subprocess
@@ -100,6 +102,7 @@ def main() -> int:
         ("selfgrade", [PY, "-m", "evaluation.selfgrade", "--config", "configs/eval.yaml", "--tag", "release"], 1800, ROOT, check_selfgrade),
         ("rehearsal", [PY, "-m", "evaluation.judge_rehearsal", *(["--worktree"] if args.worktree else [])], 1800, ROOT, None),
         ("dashboard-tests", ["npm", "test", "--silent"], 300, ROOT / "dashboard", None),
+        ("browser", [PY, "-m", "pytest", "-q", "e2e/"], 900, ROOT, None),
         ("dashboard-build", ["npm", "run", "build", "--silent"], 300, ROOT / "dashboard", None),
     ]  # fmt: skip
     data_steps = {"preflight", "gate", "sweep", "fuzz", "selfgrade", "rehearsal"}
@@ -120,6 +123,10 @@ def main() -> int:
             continue
         if name.startswith("dashboard") and not shutil.which("npm"):
             rows.append({"step": name, "status": "FAIL", "s": 0, "detail": "needs Node 20+ and npm"})
+            continue
+        if name == "browser" and importlib.util.find_spec("playwright") is None:
+            rows.append({"step": name, "status": "FAIL", "s": 0, "detail": "pip install -r requirements-e2e.txt"})
+            print(f"[FAIL] {name}: needs Playwright (pip install -r requirements-e2e.txt)", flush=True)
             continue
         if name.startswith("dashboard") and not (ROOT / "dashboard/node_modules").exists():
             run(["npm", "ci", "--no-audit", "--no-fund"], 600, ROOT / "dashboard")
