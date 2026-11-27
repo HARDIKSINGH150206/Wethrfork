@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Current phase | QA remediation and brutal audit done; submission candidate (see `docs/AUDIT.md`) |
-| Current tag | v1.1 (after this round of testing) |
+| Current phase | Submission candidate: satellite-map dashboard (D42), strict judge testing (D43), README and brief refreshed; `make release-check` PASS |
+| Current tag | v1.1 (tagged on `main` after a passing `make release-check`) |
 | Model | `wethrfork-v1.1-speedlimit`: skill network + ridge (forecast), fine-tuned dynamics network (shock response) |
 
 ## Gates
