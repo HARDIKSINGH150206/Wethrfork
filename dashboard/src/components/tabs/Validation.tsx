@@ -79,6 +79,7 @@ function LightCone() {
 }
 
 export function Validation() {
+  const labOnline = useStore((s) => s.labOnline)
   const grade = useJson<{ systematic: Grade; typed: Grade }>('/selfgrade.json')
   const gate = useJson<Gate>('/gate.json')
   const [fuzz, setFuzz] = useState<Fuzz | null>(null)
@@ -151,7 +152,9 @@ export function Validation() {
               </div>
               <small className="dim">{nat.n_events} events, day +{nat.lead}. Rain agrees in sign; the pressure response does not match the composite. We report it as is. Each map has its own symmetric scale.</small>
             </>
-          ) : <p className="hint">Start the lab server to load the composite.</p>}
+          ) : <p className="hint">{labOnline
+            ? 'Not computed on this machine yet: run python -m evaluation.natural_experiment (needs the dataset), then reopen this page.'
+            : 'Start the lab server to load the composite.'}</p>}
         </section>
       </div>
       <LightCone />
