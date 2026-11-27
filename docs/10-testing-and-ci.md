@@ -117,3 +117,30 @@ four that break the contract also by the judge-contract tests. When you change a
 cannot fail protects nothing.
 
 Before every tag: `make release-check` must print `RELEASE CHECK: PASS`; paste the summary into `docs/STATUS.md`.
+
+## 8. Browser tests (D44)
+
+`e2e/` drives the real dashboard in Chromium with Playwright: `make e2e` (or `pytest -q e2e/`), and the `browser` job in
+CI. Set-up: `pip install -r requirements-e2e.txt && python -m playwright install chromium`, then build the dashboard.
+The fixture starts the forecast server, the lab server and the built dashboard (or reuses a running `make demo`).
+
+| Test | What it proves |
+| --- | --- |
+| map loads | logo, map menu, rail, timeline, legend, coordinates, scale and the control run; the map canvas is not blank |
+| layers | each of the five maps switches, renders and has its own legend unit |
+| timeline | seek to day +5.5, play advances, back to day +1 |
+| menu | collapses to the active map and back |
+| preset fork | Warm Bay runs live; the audit shows the four official checks (all pass on real data) and the exposure table |
+| difference, swipe, rings | the delta legend, a draggable divider, the ring toggle |
+| draw a shock | drag a box, change the amount, fork: a new universe named after the shock |
+| bad input | no box: a visible reason and a disabled fork button |
+| point forecast | click readout, ten-day table, meteogram, close |
+| search, settings | jump to Kolkata; units change; start states listed; servers ready |
+| pages | Timeline Prime, Validation and About open and return to the map |
+| layouts | 1280 x 720 and a 390 x 844 phone: every control on screen, no horizontal scroll |
+
+Every test also fails on **any page or console error** and on **any request to a host other than our own local
+servers** (the dashboard must work offline). Without the dataset (CI) the two start-state requests are answered from
+the committed climatology; with it, the real demo windows are used. Proven to fail: an external web font is reported as a
+request leaving the machine, and a crash on Play is reported as a page error and as "playback did not advance".
+Failure screenshots go to `e2e-artifacts/` (uploaded by CI).

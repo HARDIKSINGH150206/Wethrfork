@@ -261,3 +261,13 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
 - **Scope**: no change to the server, the model, the scoring reproduction or any threshold of the existing causality
   gate. The rehearsal sends the day of year as the kit's `doy_sincos` of the calendar day (counted from 1) and checks
   that counting from 0 changes skill by at most 0.01 (measured: 0.003).
+
+### D44. Browser tests in the repo and in CI
+- **Decision**: the dashboard is tested in a real browser (`e2e/`, Playwright with Chromium, 16 tests, about 35 s) in a
+  separate CI job and as the `browser` step of `make release-check`, outside `make test` so that stays fast and free
+  of browsers. Each test fails on any page or console error and on any request leaving the machine.
+- **No dataset in CI**: the two start-state requests are answered in the browser with a state built from the committed
+  climatology; forecasts, verdicts and metadata stay live from our own servers. With the dataset, the real windows are used.
+  This touches no product code and ships no weather data.
+- **Why**: the 13-step browser drive used for the dashboard work lived in a scratch folder, so a UI change could break
+  the demo without any test noticing.
