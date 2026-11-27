@@ -58,7 +58,7 @@ Yugaantar DevForge &nbsp;·&nbsp; Track 2: *Multiverse of Monsoon* &nbsp;·&nbsp
 | Day-8 variance ratio, lowest channel (anti-blur) | **0.71** | 0.40 | 10 / 10 |
 | Perturbation causality, both official shocks, 71 windows | **15.0 in every window** | — | 15 / 15 |
 | Repo scan (anti-cheat and code health) | **15.0, no flags** | — | 15 / 15 |
-| Brief | two pages, `brief/wethrfork-brief.pdf` | — | judged by a person |
+| Brief | two pages, [`brief/wethrfork-brief.pdf`](brief/wethrfork-brief.pdf) ([download](https://github.com/HARDIKSINGH150206/Wethrfork/raw/main/brief/wethrfork-brief.pdf)) | — | judged by a person |
 
 *Out of sample* means the networks and ridge were trained on 2005–2019 and the calibration was fitted on 2020 only,
 then graded on 2021. The shipped calibration is refit on 2020–2021, which gives 0.134 and 0.079 on 2021 (the chart above). See
