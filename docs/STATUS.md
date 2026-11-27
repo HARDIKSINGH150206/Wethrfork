@@ -52,6 +52,7 @@ Null shock: max difference exactly 0.0 in every season and in all 71 sweep windo
 | Strict testing (D43) | `make release-check`: PASS in 78 s (lint, 125 pytest, scan 15/15, preflight 13/13, gate, sweep 15/15 every season, fuzz 60/60, self-grade 0.134, rehearsal, dashboard tests and build) |
 | Browser tests (D44) | 16 Playwright tests (`make e2e`, CI job `browser`), about 35 s from a cold start; no page errors, no request leaves the machine |
 | Judge rehearsal | 120 calls with the kit's client in a no-network, read-only, 4 CPU, 6 GB, Python 3.11 container without the kit: ready 4.5 s, slowest call 0.29 s, peak memory 0.44 GB, causality 15/15 on all 10 shock windows, null bit for bit, day-4 beats persistence on every channel, container equals dev engine (drift 0.0), day-of-year convention changes skill by 0.003 |
+| Judge day (D45) | fresh GitHub clone in the judge container, unseen 2023-24 events: all Stage 1 gates pass; automated 85.0 / 85 (set A) and 84.3 / 85 (set B); RMSE skill 0.190 / 0.157, CSI skill 0.168 / 0.095, causality 15/15 on all 10 windows, 50/50 calls valid, slowest 0.23 s, 0.45 GB; 10/10 on-the-spot shocks local, stable, no teleport; hidden-test source equals training fields (max 0.0035 std) |
 | Dashboard (D42) | satellite-map layout: bundled NASA Blue Marble base map and Natural Earth borders (India's view), frosted panels, round tools, timeline capsule; build, 16 vitest, 13-step browser drive with 0 console errors, preflight 20 / 20 |
 
 ## Open issues

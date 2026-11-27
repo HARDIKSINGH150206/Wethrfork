@@ -271,3 +271,15 @@ Sensitivity click → full natural-experiment plot → cyclone track. Items 1 to
   This touches no product code and ships no weather data.
 - **Why**: the 13-step browser drive used for the dashboard work lived in a scratch folder, so a UI change could break
   the demo without any test noticing.
+
+### D45. Judge day: score on unseen weather built with the organisers' pipeline
+- **Decision**: `make judge-day` (`evaluation/judge_day.py`, `configs/judge_day.yaml`) runs the whole judging
+  procedure on a fresh clone of GitHub `main` in the judge container, with 10 real 2023-24 event windows (two draws of
+  the judge's five types) built by the kit's own hidden-test pipeline (ARCO-ERA5), scored with the kit, plus ten
+  on-the-spot Stage 2 shocks. Event dates live in the config, never in Python.
+- **Why**: every earlier score used 2021, which the shipped calibration has seen, and the hidden test uses dates after
+  10 Jan 2023 from a different ERA5 source (ARCO, not WeatherBench 2). This measures both risks directly.
+- **Result (first run, model v1.1 unchanged)**: every Stage 1 gate passes; automated 85.0 / 85 and 84.3 / 85; the
+  ARCO fields match our training fields to 0.0035 std at most, so there is no source shift. Skill is higher than on
+  2021 (0.19 vs 0.135) because event windows change fast and persistence is weak on them, not because of leakage.
+- **Scope**: test code and config only; no change to the server, the model or any threshold.
