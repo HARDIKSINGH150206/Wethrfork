@@ -77,4 +77,4 @@ line.
 | Variance and RMSE by lead | `evaluation/report.py --fig leads` | `brief/figures/leads.png` |
 | Fuzz heatmap | `evaluation/report.py --fig fuzz` | `brief/figures/fuzz.png` |
 | Natural experiment | `evaluation/report.py --fig natural` | `brief/figures/natural.png` |
-| Dashboard screenshot | manual (P3) | `brief/figures/dashboard.png` |
+| Dashboard screenshot | `scripts/capture_readme_screenshots.py` state, 2x (P3) | `brief/figures/dashboard.jpg` |
