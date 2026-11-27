@@ -153,6 +153,7 @@ When working in parallel, each agent edits only its lane's files. Shared files (
 | Repo scan | `make scan` |
 | Judge-like run | `make judge` (offline container, read-only mount, 4 CPUs) |
 | Judge rehearsal (strict, scored with the kit) | `make rehearsal` |
+| Judge day: scored on unseen 2023-24 weather, plus live shocks | `make judge-day` |
 | Dashboard in a real browser | `make e2e` (needs `requirements-e2e.txt`) |
 | Every gate before a push or tag | `make release-check` (`make release-check-quick` without data) |
 | Serve | `python serve.py --port 8000` |
