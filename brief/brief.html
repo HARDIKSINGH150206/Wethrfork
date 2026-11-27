@@ -108,11 +108,11 @@
   <div class="byline">Live from our own forecast server: nothing is pre-rendered, and it works with Wi-Fi off.</div>
 
   <h2>Dashboard: a weather map you can fork, audit and swipe</h2>
-  <figure class="shot"><img src="figures/dashboard.png" alt="Wethrfork dashboard, map view with delta layer and audit panel"/>
+  <figure class="shot"><img src="figures/dashboard.jpg" alt="Wethrfork dashboard, map view with difference layer and audit panel"/>
   <figcaption>Map view on a held-out monsoon window after forking a warm Bay of Bengal (+3 K, +15% moisture): the <i>difference</i> in rain at day +4 over live wind particles, with the day timeline.
-  White box = the shock. Left: the official causality checks run live on the shock, the out-of-distribution meter, and the rainfall-exposure panel. Bottom right: the universe picker and legend.</figcaption></figure>
+  White box = the shock. Left: the map menu, then the official causality checks run live on the shock, the out-of-distribution meter and the rainfall-exposure panel. Bottom: the timeline, the legend (left) and the run picker, control against universe (right).</figcaption></figure>
   <ul>
-    <li><b>Map</b> in the style of a consumer weather map: location search, wind, temperature, rain, pressure and moisture layers with live particles and isobars, a click picker with a 10-day detailed forecast, and a day timeline. Beyond a weather map: <b>delta</b>, a <b>swipe compare</b> of control against universe, <b>draw a shock</b> by dragging a rectangle, and a <b>sensitivity</b> overlay showing where a value comes from.</li>
+    <li><b>Map</b> in the style of a satellite weather map, over a bundled NASA Blue Marble base with Natural Earth borders: location search, wind, temperature, rain, pressure and moisture layers with live particles and isobars, a click picker with a 10-day detailed forecast, and a day timeline. Beyond a weather map: <b>delta</b>, a <b>swipe compare</b> of control against universe, <b>draw a shock</b> by dragging a rectangle, and a <b>sensitivity</b> overlay showing where a value comes from.</li>
     <li><b>Timeline Prime</b> (forecast against reality with error maps), <b>Validation</b> (held-out skill, gate, fuzz, natural experiment and a live light-cone test) and <b>About</b>. A judge&rsquo;s new shock is answered in about 0.3 s.</li>
   </ul>
 
@@ -154,7 +154,7 @@
   <h2>Engineering</h2>
   <ul>
     <li>Offline, CPU-only, deterministic; artifacts (about 21 MB) are in the repo and hash-checked. Verified from a clean clone in a no-network, read-only, 4-CPU, 6 GB container.</li>
-    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 117 tests (including 40 API edge cases) and the official repo scan.</li>
+    <li>Network and ridge trained on 2005&ndash;2019; calibration fitted on 2020, graded on 2021, then refit on 2020&ndash;2021 (network unchanged). Reported skill is the held-out number. <code>make artifacts</code> reproduces it; CI runs 125 tests (including 40 API edge cases and a strict judge-contract suite) and the official repo scan.</li>
     <li>Honest limits: day-8 skill is about climatology; pressure response unvalidated; exposure is accumulated model rain, not a probability.</li>
   </ul>
   <div class="foot">Wethrfork v1.1 &middot; related work: semi-Lagrangian advection in learned weather models (Learning to Advect); tangent-linear perturbation forecasting.</div>
