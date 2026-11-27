@@ -84,6 +84,12 @@ def main() -> int:
         f"  farthest cell changed per day (max-axis, over all cases): {max_reach.tolist()}   limit: {[8 * (d + 1) for d in range(10)]}"
     )
     ok1 = worst_all < 1e-3 and bool((max_reach <= np.array([8 * (d + 1) for d in range(10)])).all())
+    out = ROOT / "runs" / "locality"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "summary.json").write_text(
+        json.dumps({"n": len(cases), "max_reach": max_reach.tolist(), "limit": [8 * (d + 1) for d in range(10)],
+                    "worst_outside_std": worst_all})
+    )  # fmt: skip
     # continuity: shocks of shrinking size give shrinking changes (no cliff between zero and non-zero)
     t = 2500
     init, doy = arc.data[t - 2 : t + 1], sincos_of_slot(int(slots[t]))
