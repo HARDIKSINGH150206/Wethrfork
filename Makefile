@@ -1,7 +1,7 @@
 PY ?= python
 CFG ?= configs
 
-.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep stress audit-http test scan rehearsal release-check release-check-quick serve validate judge lab dash demo preflight status figures brief
+.PHONY: setup artifacts climatology ridge train train-skill train-dyn train-dyn-ft export-weights ship-calib manifest blend postproc sigma export selfgrade gate fuzz sweep stress audit-http test scan rehearsal release-check release-check-quick e2e serve validate judge lab dash demo preflight status figures brief
 
 setup:
 	$(PY) -m venv .venv && . .venv/bin/activate && pip install -r requirements-dev.txt
@@ -67,6 +67,8 @@ release-check:
 	$(PY) -m evaluation.release_check     # every gate, strict; exit 0 only if all pass
 release-check-quick:
 	$(PY) -m evaluation.release_check --quick
+e2e:
+	$(PY) -m pytest -q e2e/                 # dashboard in a real browser (needs requirements-e2e.txt)
 
 serve:
 	$(PY) serve.py --port 8000
