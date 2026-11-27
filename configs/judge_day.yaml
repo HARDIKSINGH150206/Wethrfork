@@ -1,0 +1,42 @@
+# Judge day (evaluation/judge_day.py): the organisers' Stage 1 and Stage 2 on data our model has never seen.
+#
+# The hidden test uses dates after 2023-01-10, built from ARCO-ERA5 with the kit's own pipeline
+# (monsoon_r1.build_dataset.arco_daily). We build our blind windows the same way, from real 2023-24 events of the
+# judge's five window types. `last` is the last input day; the judge sends that day and the two before it, and
+# scores the next 10. Set A is the official 8-call run; set B repeats it on different events (a second draw).
+# Event dates are from public records of each event; the scenario prints the rain and heat each window really has.
+
+blind_windows:
+  A:
+    monsoon_onset:      {last: "2023-06-08", note: "Kerala onset, 8 June 2023"}
+    heavy_rain:         {last: "2023-07-07", note: "North India floods, Himachal and Punjab, 8-10 July 2023"}
+    heatwave:           {last: "2024-05-26", note: "North-west India heatwave, late May 2024"}
+    cyclone:            {last: "2023-05-11", note: "Cyclone Mocha, Bay of Bengal, May 2023"}
+    winter_disturbance: {last: "2024-02-17", note: "Western disturbance, snow and rain over the north, Feb 2024"}
+  B:
+    monsoon_onset:      {last: "2024-05-30", note: "Kerala onset, 30 May 2024"}
+    heavy_rain:         {last: "2024-07-27", note: "Kerala and west coast heavy rain, Wayanad, late July 2024"}
+    heatwave:           {last: "2023-06-14", note: "Uttar Pradesh and Bihar heatwave, mid June 2023"}
+    cyclone:            {last: "2023-06-11", note: "Cyclone Biparjoy, Arabian Sea, June 2023"}
+    winter_disturbance: {last: "2023-01-24", note: "Western disturbance, late January 2023"}
+
+# Same-source check: these days exist in both our training file (WeatherBench2) and ARCO-ERA5. If the hidden test's
+# fields differ from the training fields, every number above is optimistic; this measures the gap.
+source_check_days: ["2021-01-15", "2021-04-15", "2021-07-15", "2021-10-15"]
+source_check_max_std: 0.25        # mean |ARCO - training| per channel, in units of the channel std
+
+# Stage 2: judges apply a new shock on the spot (docs/08-evaluation-and-scoring.md section 5). Boxes are
+# [lat_min, lat_max, lon_min, lon_max], cell centres inside count. Kinds: add (physical units), scale (fraction of the
+# current value), vortex (cyclonic wind and a pressure low centred in the box).
+live_shocks:
+  rajasthan_heatwave:  {box: [24, 30, 69, 77], kind: add,   values: {t2m: 5.0}}
+  cyclone_vortex:      {box: [13, 19, 85, 91], kind: vortex, vmax: 15.0, dp: -1500.0}
+  dry_central_india:   {box: [18, 26, 74, 84], kind: scale, values: {tcwv: -0.30}}
+  ghats_downpour:      {box: [12, 20, 72, 76], kind: add,   values: {tp: 25.0}}
+  pressure_low_bay:    {box: [18, 23, 86, 92], kind: add,   values: {msl: -800.0}}
+  extreme_warm_bay:    {box: [8, 20, 82, 94],  kind: add,   values: {t2m: 10.0}}
+  himalaya_cold:       {box: [30, 36, 76, 84], kind: add,   values: {t2m: -6.0}}
+  north_east_corner:   {box: [32, 37, 95, 100], kind: add,  values: {t2m: 3.0, tcwv: 4.0}}
+  one_cell_nudge:      {box: [22, 23, 80, 81], kind: add,   values: {t2m: 2.0}}
+  whisper:             {box: [8, 20, 82, 94],  kind: add,   values: {t2m: 0.05}}
+live_window: "A.heavy_rain"       # the window the live shocks are applied to (the demo's monsoon state)

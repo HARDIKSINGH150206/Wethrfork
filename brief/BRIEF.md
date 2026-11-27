@@ -88,14 +88,18 @@ judge's floor, 0.4.*
 
 ## 4. Why the speed limit is real
 
-![Light-cone test](figures/lightcone.png)
-
-*Light-cone test: we change one cell and measure how far the change has travelled after 1–4 steps (max-axis distance).
-It never travels more than 8 cells per step.*
-
-![Fuzz test heatmap](figures/fuzz.png)
-
-*Stress test: 200 random shocks, 100% valid and 99.5% causal. White cells are combinations that were not sampled.*
+<table>
+<tr>
+<td width="50%"><img src="figures/lightcone.png" alt="Light-cone test" width="100%"></td>
+<td width="50%"><img src="figures/fuzz.png" alt="Stress test heatmap" width="100%"></td>
+</tr>
+<tr>
+<td><em>Light-cone test: we change one cell and measure how far the change has travelled after 1–4 steps (max-axis
+distance). It never travels more than 8 cells per step.</em></td>
+<td><em>Stress test: 200 random shocks, 100% valid and 99.5% causal. White cells are combinations that were not
+sampled.</em></td>
+</tr>
+</table>
 
 ---
 

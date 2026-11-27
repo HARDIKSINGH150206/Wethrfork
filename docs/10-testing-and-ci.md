@@ -144,3 +144,22 @@ servers** (the dashboard must work offline). Without the dataset (CI) the two st
 the committed climatology; with it, the real demo windows are used. Proven to fail: an external web font is reported as a
 request leaving the machine, and a crash on Play is reported as a page error and as "playback did not advance".
 Failure screenshots go to `e2e-artifacts/` (uploaded by CI).
+
+## 9. Judge day on unseen weather (D45)
+
+`make judge-day` (`evaluation/judge_day.py`, windows and live shocks in `configs/judge_day.yaml`) reproduces judging
+end to end on weather the model has never seen:
+
+1. **Repo**: a fresh `git clone` of GitHub `main`, what the jury downloads (`--head` or `--worktree` for local code).
+2. **Server**: `python serve.py --port 8000` in the judge container (offline, read-only, 4 CPUs, 6 GB, Python 3.11, no kit).
+3. **Hidden calls**: the 8 official calls first, through the kit's client: 5 real windows of the judge's 5 types,
+   then warm_ocean, monsoon_stall and null. The windows are real 2023-24 events (set A; set B is a second draw),
+   built with the kit's own hidden-test pipeline (`monsoon_r1.build_dataset.arco_daily`, ARCO-ERA5). Shocks are
+   scored on every window, since the judge picks one.
+4. **Score**: the 100-point table with `monsoon_r1.scoring` and `monsoon_r1.repo_scan` (85 automated; brief by hand).
+5. **Stage 2**: ten shocks a judge might invent (land heatwave, cyclone vortex, drying, downpour, pressure low, +10 K,
+   cold, grid corner, one cell, 0.05 K), checked with the kit's causality rules on their own boxes.
+6. **Source check**: ARCO-ERA5 against our training file on shared days (does the hidden data differ from training?).
+
+The first run downloads about 140 days of ERA5 (about an hour, cached in `data/blind/`; needs `pip install zarr gcsfs`);
+later runs take about 3 minutes. Output: `runs/judge_day/scorecard.md` and `report.json`.
