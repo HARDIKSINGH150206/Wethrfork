@@ -34,12 +34,17 @@ def port_free(port: int) -> bool:
 def static_checks(ports: tuple[int, int, int]) -> None:
     check("python >= 3.10", sys.version_info >= (3, 10), sys.version.split()[0])
     missing = []
-    for m in ("torch", "numpy", "fastapi", "uvicorn", "yaml", "pandas", "xarray", "netCDF4"):
+    for m in ("torch", "numpy", "fastapi", "uvicorn", "yaml", "pandas", "xarray", "netCDF4", "monsoon_r1"):
         try:
             __import__(m)
         except Exception:
             missing.append(m)
-    check("python packages", not missing, f"missing: {missing}" if missing else "all importable")
+    hint = (
+        " (the lab's live verdict needs the kit: pip install ./vendor/monsoon_r1_kit-1.0.0-py3-none-any.whl)"
+        if "monsoon_r1" in missing
+        else ""
+    )
+    check("python packages", not missing, f"missing: {missing}{hint}" if missing else "all importable")
 
     art = ROOT / "artifacts"
     from training.export_artifacts import POSTPROC_KEYS, REQUIRED

@@ -392,7 +392,7 @@ The rain response agrees with reality; the pressure response does not, and we re
 flowchart TB
     subgraph CI["Every push: GitHub Actions"]
         direction LR
-        R["ruff lint"] --> U["125 pytest<br/>unit, contract and<br/>judge-contract tests"] --> DB["Dashboard<br/>vitest, type-check, build"]
+        R["ruff lint"] --> U["125 pytest<br/>unit, contract and<br/>judge-contract tests"] --> DB["Dashboard<br/>vitest, type-check, build"] --> BR["Browser tests<br/>16 Playwright tests"]
     end
     subgraph REL["Before every tag: make release-check"]
         direction LR
@@ -406,6 +406,7 @@ flowchart TB
 | **Unit and contract tests** | `make test` (CI) | Shapes, units, null shock, determinism, light cone (max-axis 8, Euclidean 9.66, judge radius), clamps, calibration, artifact hashes, no dates or route strings outside `serve.py`, HTTP edge cases. |
 | **Judge-contract tests** | part of `make test` | The server starts from a **read-only** copy of only `serve.py`, `wethrfork/` and `artifacts/`, with the kit, HTTP clients and our own non-serve code made unimportable. The organisers' schema validator then passes. |
 | **Judge rehearsal** | `make rehearsal` | The organisers' Stage 1 procedure on a clean copy of `git HEAD`. The server runs in a Python 3.11 container with **no network, a read-only filesystem, 4 CPUs and 6 GB**, and no kit. 120 calls are made with the organisers' client and scored with their code. |
+| **Browser tests** | `make e2e` (CI) | The real dashboard in Chromium: maps, timeline, preset and drawn forks, live verdict, difference, swipe, point forecast, search, settings, pages, laptop and phone layouts. Fails on any page error or any request leaving the machine. |
 | **Release check** | `make release-check` | Everything above plus the causality gate, the 71-window sweep, fuzz, the self-grade and the dashboard build. It exits 0 only if every step passes. Last run: **PASS in 78 s**. |
 
 **The gates are proven to fail.** We built five broken copies of the server. Each was rejected:
